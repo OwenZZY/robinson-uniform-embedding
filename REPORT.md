@@ -4,11 +4,12 @@ Consolidated report, kept current each round. Four buckets: **I know / Decided /
 
 ## Reading guide
 
-1. This report's **Findings** first — F1 is a substantive gap in the published FW-var pseudocode, with a concrete trace on the paper's own Example 1B and the adopted fix.
-2. `SPEC.md` — the **standalone core spec**: minimal definitions, data types, and numbered pseudocode (L1, L2… per function, already 0-based). Implementable without the paper; prose refers to internal line numbers.
-3. `SPEC-engineering.md` — the **software** (also paper-free): layers, public interface, translation/validation, LP-backend mechanics, numerics, naming, packaging, errors, roadmap, fixtures.
-4. `docs/definitions.md` — glossary with source provenance (reference).
-5. `docs/overview.md` — the paper map (reference).
+1. `REVIEW-spec.md` — **spec readiness review (round 7)**: verdict, 8 blocking findings, 8 small fixes, 4 decisions, evidence. Read this before feeding the specs to a coding agent; the specs are not yet feedable as-is (B1: §4's table does not finish on Example 1B).
+2. This report's **Findings** — F1 is a substantive gap in the published FW-var pseudocode, with a concrete trace on the paper's own Example 1B and the adopted fix.
+3. `SPEC.md` — the **standalone core spec**: minimal definitions, data types, and numbered pseudocode (L1, L2… per function, already 0-based). Implementable without the paper; prose refers to internal line numbers.
+4. `SPEC-engineering.md` — the **software** (also paper-free): layers, public interface, translation/validation, LP-backend mechanics, numerics, naming, packaging, errors, roadmap, fixtures.
+5. `docs/definitions.md` — glossary with source provenance (reference).
+6. `docs/overview.md` — the paper map (reference).
 
 ## I know
 
@@ -18,6 +19,7 @@ Consolidated report, kept current each round. Four buckets: **I know / Decided /
 - The two Example 1 matrices are recorded as fixtures and hand-checked: $A$'s published embedding satisfies every pair inequality; $B$'s witness cycle $\langle1,2,6,4,1\rangle$ (upper-bound orientation) has bound $(0,0)$.
 - Constraints honored: nothing in `sources/` modified; no proofs or complexity analysis added (the paper's stated complexities are recorded as statements only); no tests/README/examples built.
 - Round 2 scope clarification (with the author): the problem is general $\mathcal S^n[k]$; the core (bound generation + construction) is $k$-generic and was never dropped. Only the combinatorial *threshold search* is $k=2$-specific; $k>2$ feasibility is an LP per the paper (L435), with combinatorial $k\ge3$ left open (L602). v1 now implements the full general-$k$ pipeline (D3, D11).
+- Round 7 (review, no spec edits): both fixtures re-derived independently; `k=2` ratio logic and construction verified exactly on 600 random Robinson matrices against exhaustive simple-cycle enumeration; `SPEC.md` §4 as written (all walks, all ordered pairs) explodes on Example 1B (stage 4: largest cell 419, max $|b|_1=1760$; stage 5 did not finish in 150 s) and, in the literal chain-slot reading, already hangs on Example 1A. Corpus of findings: `REVIEW-spec.md`.
 
 ## Decided
 
@@ -28,8 +30,8 @@ Consolidated report, kept current each round. Four buckets: **I know / Decided /
 - **D5 — Numerics.** $k=2$ pipeline computes with `fractions.Fraction` (all ratio bounds are rational, so every strict inequality is exact); conversion to `float` only at the public boundary. Given-thresholds mode inherits the user's numeric type.
 - **D6 — FW fix (from F1).** Bound generation sweeps all ordered pairs; the reversal update of tex L546 is dropped. Init already covers both directions.
 - **D7 — Minimality bookkeeping.** Minimality on $\beta^+$ vectors under $\preceq$; insert-with-prune (antichain); $k=2$ cells are chain-slot dicts with the membership rule of L585.
-- **D8 — Boundary conventions.** R2 (loop init $\beta^+(i,i)=\chi_k$), R6 ($\mathrm{ub}_v=+\infty \Rightarrow \Pi(v)=\mathrm{lb}_v+d_1$), R7 ($a_2=0$ cycle branch), R8 (ratio window intersected with $(0,1)$, $d_1=1$). All recorded in `SPEC.md` §8.
-- **D9 — Naming.** Package `robinson_unif_emb`; public surface exactly `uniform_embedding` + `EmbeddingResult`; private modules and paper-flavored internal names (`pi`, `d`, `beta_plus`, `preceq`, `T`), mapping table in `SPEC.md` §6.
+- **D8 — Boundary conventions.** R2 (loop init $\beta^+(i,i)=\chi_k$), R6 ($\mathrm{ub}_v=+\infty \Rightarrow \Pi(v)=\mathrm{lb}_v+d_1$), R7 ($a_2=0$ cycle branch), R8 (ratio window intersected with $(0,1)$, $d_1=1$). All recorded in `SPEC.md` §1, §5b and §6.
+- **D9 — Naming.** Package `robinson_unif_emb`; public surface exactly `uniform_embedding` + `EmbeddingResult`; private modules and paper-flavored internal names (`pi`, `d`, `beta_plus`, `preceq`, `T`), mapping table in `SPEC-engineering.md` §7.
 - **D10 — Version control.** Repo initialized and this round committed (per AGENTS.md "commit per round"); no push. `.gitignore` added for `.DS_Store`/`__pycache__`. `sources/` committed unmodified (see T3).
 - **D11 — LP backend layering (round 2).** New optional module `_lp.py` holds the SciPy import (lazy) and `search_thresholds`; `_core.py` stays pure stdlib for every $k$ and gains `cycle_bounds`. The general-$k$ automatic path is wired in the public function (core → `_lp` → core), not inside core. LP formulation: homogeneous max-slack with $d_1=1$ (R11); strict-feasible iff optimum $t^*>0$.
 - **D12 — Spec restructure (round 3, author's choice).** Split into two files written linearly: `SPEC.md` is now the mathematician-readable pipeline (input→output spine, $k$-branch guiding the reader to the right function page, uniform Input/Output/Paper/Pseudocode headers); `SPEC-engineering.md` holds all software concerns (layers, public interface, translation/validation/bijection, LP mechanics, numerics, naming, packaging, errors, roadmap). Rationale: the previous single spec mixed engineering detail into the algorithm and lacked a navigable spine. Spec written linearly (small, tightly-coupled pipeline); parallel agents reserved for the implementation round where module write scopes are disjoint.
@@ -43,6 +45,10 @@ Consolidated report, kept current each round. Four buckets: **I know / Decided /
 - **T3 — Track `sources/` in git?** Default: yes (your own arXiv source; nothing is pushed without your say-so). Alternative: keep it untracked/local.
 - **T4 — Richer failure payload?** Default: witness cycles only (as the paper returns $C_1,C_2$). Alternative: also expose the two critical ratio values / bound vectors.
 - **T5 — Tests, README, plotting helper?** Default: offer after the core works, build only on your go-ahead (per AGENTS.md).
+- **T6 — Round 7: which walks may enter the bound table?** (B1.) Default: simple walks only (open paths, simple cycles) — matches the paper's $\mathcal U_{u,v}$, restores $Z^k_n$ / the $\le 2n$ and $M$ bounds, makes `simple_cycle` unnecessary, verified on A, B and 600 random $k=2$ matrices. Known caveat: on one random $k=4$ matrix a cycle bound was missed by pruning (verdict unchanged); the $k\ge3$ path needs a brute-force cross-check before its witnesses are promised. Alternatives: all walks (complete, exponential — fails Example 1B) or a capped walk length (needs a completeness argument).
+- **T7 — Round 7: $k>2$ witness contract.** (B3.) Default: a verified irreducible infeasible subset (deletion filter) returned as cycles plus "$d\in\bm D^k$"; drop the unproved "$\le k$" unless derived from the dual.
+- **T8 — Round 7: strict-LP tolerance.** (B7.) Default: decide $t^*>10^{-9}\sum|b|_1$ and re-verify the final $\pi$ exactly; a failed check is a numerical failure, not a feasible answer.
+- **T9 — Round 7: $k=1$.** Default: trivially feasible and combinatorial, no SciPy (today the general path sends it to the LP).
 
 ## Findings
 
