@@ -1,15 +1,16 @@
-# REPORT — round 1 (documentation & design)
+# REPORT — rounds 1–8 (documentation, design, spec review)
 
 Consolidated report, kept current each round. Four buckets: **I know / Decided / To-decide / Findings**.
 
 ## Reading guide
 
-1. `REVIEW-spec.md` — **spec readiness review (round 7)**: verdict, 8 blocking findings, 8 small fixes, 4 decisions, evidence. Read this before feeding the specs to a coding agent; the specs are not yet feedable as-is (B1: §4's table does not finish on Example 1B).
-2. This report's **Findings** — F1 is a substantive gap in the published FW-var pseudocode, with a concrete trace on the paper's own Example 1B and the adopted fix.
-3. `SPEC.md` — the **standalone core spec**: minimal definitions, data types, and numbered pseudocode (L1, L2… per function, already 0-based). Implementable without the paper; prose refers to internal line numbers.
-4. `SPEC-engineering.md` — the **software** (also paper-free): layers, public interface, translation/validation, LP-backend mechanics, numerics, naming, packaging, errors, roadmap, fixtures.
-5. `docs/definitions.md` — glossary with source provenance (reference).
-6. `docs/overview.md` — the paper map (reference).
+1. `HANDOFF.md` — **what changed in round 8 and what to notice**; feed this together with the two spec files to the coding agent. It lists the fixes, the acceptance fixtures and the known limitation.
+2. `SPEC.md` — the **standalone core spec**: minimal definitions, data types, and numbered pseudocode (L1, L2… per function, already 0-based). Implementable without the paper; prose refers to internal line numbers.
+3. `SPEC-engineering.md` — the **software** (also paper-free): layers, public interface, translation/validation, LP-backend mechanics, numerics, naming, packaging, errors, roadmap, fixtures.
+4. `REVIEW-spec.md` — **round-7 review** (history): the 8 blocking findings and 8 small fixes that round 8 addressed, with the evidence. No longer a to-do list.
+5. This report's **Findings** — F1 is a substantive gap in the published FW-var pseudocode; F11–F13 are the round-8 spec findings.
+6. `docs/definitions.md` — glossary with source provenance (reference).
+7. `docs/overview.md` — the paper map (reference).
 
 ## I know
 
@@ -20,6 +21,7 @@ Consolidated report, kept current each round. Four buckets: **I know / Decided /
 - Constraints honored: nothing in `sources/` modified; no proofs or complexity analysis added (the paper's stated complexities are recorded as statements only); no tests/README/examples built.
 - Round 2 scope clarification (with the author): the problem is general $\mathcal S^n[k]$; the core (bound generation + construction) is $k$-generic and was never dropped. Only the combinatorial *threshold search* is $k=2$-specific; $k>2$ feasibility is an LP per the paper (L435), with combinatorial $k\ge3$ left open (L602). v1 now implements the full general-$k$ pipeline (D3, D11).
 - Round 7 (review, no spec edits): both fixtures re-derived independently; `k=2` ratio logic and construction verified exactly on 600 random Robinson matrices against exhaustive simple-cycle enumeration; `SPEC.md` §4 as written (all walks, all ordered pairs) explodes on Example 1B (stage 4: largest cell 419, max $|b|_1=1760$; stage 5 did not finish in 150 s) and, in the literal chain-slot reading, already hangs on Example 1A. Corpus of findings: `REVIEW-spec.md`.
+- Round 8 (patch, author's "go"): applied the review's defaults. The bound table now holds **simple** walks only (open paths; simple cycles on the diagonal; no diagonal seed; `simple_cycle` deleted); the $k=2$ ratio test has the two single-witness branches for bounds outside $(0,1)$; the $k>2$ witnesses are a verified deletion-filter set (jointly contradictory with $d\in\bm D^k$, no "$\le k$" claim); the $k>2$ dispatch is a callable injected by `__init__.py` (core imports no SciPy); the $k=1$ path is combinatorial; thresholds are converted to `Fraction`; every successful result is verified and a failure raises `RuntimeError`; the cell interface is `cell_items` everywhere. The patched pseudocode was re-implemented and re-tested before the edit: A/B pass, 600 random $k=2$ matrices match the exhaustive oracle, $k=1$ random binary Robinson matrices all verify, and $k=3$ completeness 120/120. New $k=3$ fixtures A₃/B₃ were verified (A₃ feasible with the same $\pi$, $d=(8,6,0.5)$; B₃ has the $(0,0,0)$ cycle).
 
 ## Decided
 
@@ -36,6 +38,13 @@ Consolidated report, kept current each round. Four buckets: **I know / Decided /
 - **D11 — LP backend layering (round 2).** New optional module `_lp.py` holds the SciPy import (lazy) and `search_thresholds`; `_core.py` stays pure stdlib for every $k$ and gains `cycle_bounds`. The general-$k$ automatic path is wired in the public function (core → `_lp` → core), not inside core. LP formulation: homogeneous max-slack with $d_1=1$ (R11); strict-feasible iff optimum $t^*>0$.
 - **D12 — Spec restructure (round 3, author's choice).** Split into two files written linearly: `SPEC.md` is now the mathematician-readable pipeline (input→output spine, $k$-branch guiding the reader to the right function page, uniform Input/Output/Paper/Pseudocode headers); `SPEC-engineering.md` holds all software concerns (layers, public interface, translation/validation/bijection, LP mechanics, numerics, naming, packaging, errors, roadmap). Rationale: the previous single spec mixed engineering detail into the algorithm and lacked a navigable spine. Spec written linearly (small, tightly-coupled pipeline); parallel agents reserved for the implementation round where module write scopes are disjoint.
 - **D13 — Lean spec + separate pseudocode (rounds 4–5, author feedback).** The author asked only to specify input/output data and types — not to inline code into the spec. Round 4 overcorrected by folding all pseudocode into `SPEC.md` (heavy, code-like); round 5 reverts that. Final layout: `SPEC.md` is a lean data/interface contract (top-level input/output, data types, indexing-trap table, pipeline, per-function input/output table, tricks summary) with **no code**; the pseudocode lives in `docs/pseudocode.md` (P1–P11, R1–R12), linked from each function row. Multi-letter variables render as $\mathrm{ub},\mathrm{lb}$ (roman). Core data types in `SPEC.md`; public-facing types in engineering.
+- **D15 — Round 8: simple-walk table (was T6).** The bound table stores upper-bound **paths** and simple cycles only (`SPEC.md` §1, §4); the one-vertex walk is never stored; `simple_cycle` is removed. Rationale: the paper's $\mathrm{UBW}(i,j)$ is over paths; the walk closure is infinite and blew up on Example 1B. Verified on A, B, 600 random $k=2$ matrices (exact oracle), and $k=3$ completeness 120/120; the $k>2$ pruning caveat is recorded in `SPEC.md` §4 and handled by the verification step.
+- **D16 — Round 8: one call graph (was B4).** `_core.solve_general(a, search)` receives the search callable; `__init__.py` passes `_lp.search_thresholds` only for the $k>2$ automatic search. The core never imports `_lp` or SciPy.
+- **D17 — Round 8: $k>2$ witnesses (was T7/B3).** A deletion filter (`minimal_witnesses`, one LP per trial) returns an irreducible infeasible set; the certificate is "these cycles together with $\bm d\in\bm D^k$"; the count is not promised $\le k$.
+- **D18 — Round 8: tolerance + verification (was T8/B7).** $t^*>10^{-9}\,(1+\max\sum|b|)$; every successful result is verified with `verify_embedding` and a failure raises `RuntimeError` (never a false feasible).
+- **D19 — Round 8: $k=1$ combinatorial (was T9).** `d=(1,)`, no SciPy, §6 construction; every binary Robinson matrix is feasible.
+- **D20 — Round 8: exactness of given thresholds.** Translation converts supplied thresholds to `Fraction` (floats by exact binary conversion); $k=1$, $k=2$ and given-$d$ run exactly; only the LP path is float (and verified).
+- **D21 — Round 8: cell interface and output contract.** `cell_items` is the only cell iteration; failure is `(None, witnesses)`; witnesses are jointly contradictory except the $k=2$ individually-unsatisfiable cases; `NO_SOLUTION` is gone.
 - **D14 — Standalone numbered spec (round 6, author feedback).** The spec must be implementable **without the paper**. `SPEC.md` is now self-contained: minimal inline definitions, data types, and **numbered pseudocode** (L1, L2… per function) already in 0-based indexing; prose refers to internal line numbers, never the paper. Index shifts are encoded in the code, not left to the reader. All paper citations removed from `SPEC.md` and `SPEC-engineering.md`; provenance stays in `docs/definitions.md`, `docs/overview.md`, and this report. `docs/pseudocode.md` folded into `SPEC.md` and removed. Structure (author's choice): standalone `SPEC.md` + paper-free `SPEC-engineering.md`; only the math needed to implement is inline (full glossary stays in `docs/definitions.md`).
 
 ## To-decide (defaults stated; skipping is safe)
@@ -45,10 +54,12 @@ Consolidated report, kept current each round. Four buckets: **I know / Decided /
 - **T3 — Track `sources/` in git?** Default: yes (your own arXiv source; nothing is pushed without your say-so). Alternative: keep it untracked/local.
 - **T4 — Richer failure payload?** Default: witness cycles only (as the paper returns $C_1,C_2$). Alternative: also expose the two critical ratio values / bound vectors.
 - **T5 — Tests, README, plotting helper?** Default: offer after the core works, build only on your go-ahead (per AGENTS.md).
-- **T6 — Round 7: which walks may enter the bound table?** (B1.) Default: simple walks only (open paths, simple cycles) — matches the paper's $\mathcal U_{u,v}$, restores $Z^k_n$ / the $\le 2n$ and $M$ bounds, makes `simple_cycle` unnecessary, verified on A, B and 600 random $k=2$ matrices. Known caveat: on one random $k=4$ matrix a cycle bound was missed by pruning (verdict unchanged); the $k\ge3$ path needs a brute-force cross-check before its witnesses are promised. Alternatives: all walks (complete, exponential — fails Example 1B) or a capped walk length (needs a completeness argument).
-- **T7 — Round 7: $k>2$ witness contract.** (B3.) Default: a verified irreducible infeasible subset (deletion filter) returned as cycles plus "$d\in\bm D^k$"; drop the unproved "$\le k$" unless derived from the dual.
-- **T8 — Round 7: strict-LP tolerance.** (B7.) Default: decide $t^*>10^{-9}\sum|b|_1$ and re-verify the final $\pi$ exactly; a failed check is a numerical failure, not a feasible answer.
-- **T9 — Round 7: $k=1$.** Default: trivially feasible and combinatorial, no SciPy (today the general path sends it to the LP).
+- **T6 — RESOLVED (round 8, author's "go").** Simple-walk table; see D15.
+- **T7 — RESOLVED (round 8).** Deletion-filter witnesses; see D17.
+- **T8 — RESOLVED (round 8).** LP tolerance + verification; see D18.
+- **T9 — RESOLVED (round 8).** $k=1$ combinatorial; see D19.
+- **T10 — Completeness of the pruned $k>2$ table.** Default: out of scope for v1; the verification step catches a false feasible. If the author wants a proof or a complete enumeration, that is a separate research/engineering task.
+- **T11 — `exact=True` output.** Default: still deferred (T2); the given-$d$ and $k=2$ paths are already exact internally.
 
 ## Findings
 
@@ -62,3 +73,6 @@ Consolidated report, kept current each round. Four buckets: **I know / Decided /
 - **F8 — The $d_{k+1}$ switch is deliberate, not a typo.** Definition uses $d_{k+1}=-\infty$; from `thm:monotone` onward $d_{k+1}=0$ with strict inequalities and $\Pi$ strictly increasing (explained at L159). The implementation uses the strict form throughout.
 - **F9 — `\dist` is signed.** The macro expands to $\Pi(v)-\Pi(u)$ (alias.tex L206), not $|\Pi(v)-\Pi(u)|$; absolute values appear only in the original definition. All transcriptions use the signed form under the monotonicity convention.
 - **F10 — Chain-membership boundary ($k=2$).** L585 assigns $a_2=0$ to chain 2, while $(-t,0)$ is listed in $S_t^1$ (L495). Consistent: $(-t,0)$ is $\preceq$-below every element of $S_t^2$, so per-chain-minimum bookkeeping is unaffected. The zero bound ($t=0$) is allowed as a slot (R9).
+- **F11 — Bound-table walk closure is infinite (round 7, fixed round 8).** With walks with repeated vertices, minimal bounds are incomparable and leave $Z^k_n$; on Example 1B the cell at stage 4 reached 419 bounds / $|b|_1=1760$ and stage 5 did not finish. Fixed by storing simple walks only (D15) and recording the $k>2$ pruning caveat.
+- **F12 — $k=2$ ratio test could return `None` witnesses (round 7, fixed round 8).** A bound with $a_2>0,\ r\ge1$ (or $a_2<0,\ r\le0$) is individually unsatisfiable inside $(0,1)$ but the old test only updated the window, so `lo>=hi` could return `(w_lo, None)`. Fixed with the two single-witness branches (`SPEC.md` §5b L7 and L11); a random $k=2$ run found such a bound and the patched test returns a valid single cycle.
+- **F13 — The paper's FW-var and the spec's table are ambiguous on paths vs walks (round 7–8).** The paper's $\mathrm{UBW}(i,j)$ is over paths but the pseudocode can store walks; the spec now resolves this explicitly (D15). Remaining risk: pruning can drop a path needed to assemble a cycle for $k>2$ (concrete $k=4$ example in `REVIEW-spec.md` §5); v1 verifies the result instead of claiming completeness (D18, T10).

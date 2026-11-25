@@ -1,5 +1,7 @@
 # Spec readiness review — round 7 (review only; no spec edits)
 
+> **Status (round 8): applied.** The author approved the defaults; `SPEC.md` and `SPEC-engineering.md` now implement B1–B8/N1–N8 (T6–T9 resolved). See `HANDOFF.md` for what changed and what the next chat must notice. This file remains the evidence for the review and the known `k>2` pruning caveat.
+
 **Verdict.** Not ready to feed as-is. The interfaces, data types, definitions, fixtures and the exact `k=2` arithmetic are implementation-ready and were verified. The core of `SPEC.md` is not: §4's bound table is defined over walks with repeated vertices, and as specified it does not finish on the spec's own Example 1B (measured: stage 4 already has a cell of 419 bounds with `|b|₁ = 1760`; stage 5 did not finish in 150 s). Two headline claims tied to that table — "≤ 2n" cells and O(1) chain-slot insertion — are false for the table actually defined. The witness/error contract (`simple_cycle`, `farkas_witnesses`, `NO_SOLUTION`) and the core↔LP wiring are also not implementable as written. A coding agent fed these two files will produce code that passes Example 1A, hangs on Example 1B, and invents the `k>2` witnesses.
 
 **Fix list:** 8 blocking items (§2, B1–B8), 8 small ones (§3, N1–N8), and 4 decisions that are yours (§4, T6–T9). Everything else in the two files is good; §1 says what not to touch.
