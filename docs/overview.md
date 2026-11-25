@@ -1,7 +1,7 @@
 # Paper overview — Uniform Embeddings for Robinson Similarity Matrices
 
 Janssen–Zhang, arXiv:2105.09197v1 (May 2021). LaTeX source: `sources/arXiv-2105.09197v1/ArXiv_ver.tex`.
-Companion files: `SPEC.md` (the data/interface contract), `docs/pseudocode.md` (Python-like transcription P1–P11 with conventions R1–R12), and `docs/definitions.md` (every term, one per line, with source lines). This overview is the reading map.
+Companion files: `SPEC.md` (the standalone core spec — definitions, data types, and numbered pseudocode; implementable without the paper), `SPEC-engineering.md` (software design), and `docs/definitions.md` (every term, one per line, with source lines). This overview is the reading map of the paper.
 
 ## The problem
 
@@ -18,7 +18,7 @@ Equivalently: $A=\sum_{t=1}^k A^{(t)}$ decomposes into nested indifference (unit
 ## The construction formula (§4.2)
 
 Given feasible $\mathbf d$ and the bound tables: $\Pi(1)=0$, and for $v\ge2$,
-$\Pi(v)=(\mathrm{ub}_v+\mathrm{lb}_v)/2$ where $\mathrm{ub}_v$ ($\mathrm{lb}_v$) is the smallest (largest) value of $\Pi(i)+{}$best upper (lower) bound on $(i,v)$, over $i<v$. The midpoint lands strictly inside every required interval. See `docs/pseudocode.md` P6 for the executable form, including the empty-upper-set convention.
+$\Pi(v)=(\mathrm{ub}_v+\mathrm{lb}_v)/2$ where $\mathrm{ub}_v$ ($\mathrm{lb}_v$) is the smallest (largest) value of $\Pi(i)+{}$best upper (lower) bound on $(i,v)$, over $i<v$. The midpoint lands strictly inside every required interval. See `SPEC.md` §6 for the executable form, including the empty-upper-set convention.
 
 ## The $k=2$ pipeline (§5.3.1)
 
@@ -32,11 +32,10 @@ The $k=2$ speed-up: $\mathbb Z^2_n$ partitions into $2n$ chains $S_t^1,S_t^2$ (`
 
 ## Reading order for implementers
 
-1. `docs/definitions.md` — notation and terms.
-2. `SPEC.md` — data types (§2), indexing trap (§3), and the per-function input/output contract (§5).
-3. `docs/pseudocode.md` — pseudocode P1–P11 and conventions R1–R12.
-4. `SPEC-engineering.md` — public interface, translation, LP backend, naming, packaging.
-5. `REPORT.md` — findings, especially F1 (a gap in the published FW-var pseudocode and the adopted fix).
+1. `SPEC.md` — the standalone core spec: definitions, data types, and numbered pseudocode (implement from this alone, no paper needed).
+2. `SPEC-engineering.md` — public interface, translation, LP backend, naming, packaging.
+3. `docs/definitions.md` — glossary with source provenance (optional reference).
+4. `REPORT.md` — findings on the source paper, especially F1 (a gap in the published FW-var pseudocode and the adopted fix).
 
 ## Section map of the source
 

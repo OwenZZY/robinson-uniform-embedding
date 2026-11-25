@@ -5,11 +5,10 @@ Consolidated report, kept current each round. Four buckets: **I know / Decided /
 ## Reading guide
 
 1. This report's **Findings** first — F1 is a substantive gap in the published FW-var pseudocode, with a concrete trace on the paper's own Example 1B and the adopted fix.
-2. `SPEC.md` — the lean **data/interface contract**: top-level input/output (§1), data types (§2), the indexing trap (§3), pipeline (§4), per-function input/output table (§5), tricks summary (§6). No code.
-3. `docs/pseudocode.md` — the step-by-step pseudocode P1–P11 and resolved conventions R1–R12.
-4. `SPEC-engineering.md` — the **software**: layers, public interface, translation/validation, LP-backend mechanics, numerics, naming, packaging, errors, roadmap.
-5. `docs/definitions.md` — every mathematical term, one per line, with source lines.
-6. `docs/overview.md` — the paper map for readers and other models.
+2. `SPEC.md` — the **standalone core spec**: minimal definitions, data types, and numbered pseudocode (L1, L2… per function, already 0-based). Implementable without the paper; prose refers to internal line numbers.
+3. `SPEC-engineering.md` — the **software** (also paper-free): layers, public interface, translation/validation, LP-backend mechanics, numerics, naming, packaging, errors, roadmap, fixtures.
+4. `docs/definitions.md` — glossary with source provenance (reference).
+5. `docs/overview.md` — the paper map (reference).
 
 ## I know
 
@@ -22,7 +21,7 @@ Consolidated report, kept current each round. Four buckets: **I know / Decided /
 
 ## Decided
 
-- **D1 — Deliverables.** `SPEC.md` (lean data/interface contract), `docs/pseudocode.md` (pseudocode P1–P11, conventions R1–R12), `SPEC-engineering.md` (software), `docs/definitions.md`, `docs/overview.md`; this report.
+- **D1 — Deliverables.** `SPEC.md` (standalone core spec with numbered pseudocode), `SPEC-engineering.md` (software, paper-free), `docs/definitions.md` (glossary/provenance), `docs/overview.md` (paper map); this report.
 - **D2 — Architecture.** Three layers: core `_core.py` (paper algorithms, trusts input, zero try/except/raise, pure stdlib), translation `_translate.py` (validation predicates + immediate halt, format conversion, label bijection), outer (user notebook). No intermediate layer needed. Single public function `uniform_embedding(A, labels=None, thresholds=None)` returning a frozen `EmbeddingResult` (`feasible`, `positions`, `thresholds`, `cycles`).
 - **D3 — v1 scope (revised round 2).** Complete for all of $\mathcal S^n[k]$. $k=2$: combinatorial algorithm, no dependencies. Any $k$ with supplied thresholds: combinatorial cycle-system check + construction. $k\ne2$ without thresholds: automatic search via LP feasibility over the cycle system, SciPy as an optional dependency; infeasibility returns Farkas witness cycles. The problem is general $k$; only the *combinatorial threshold search* is $k=2$-specific (ratio collapse, §5.3). For $k>2$ the paper itself routes feasibility through LP (L435) and leaves a combinatorial test for $k\ge3$ open (L602).
 - **D4 — Identifiers.** Internal indices 0-based; external labels via an explicit bijection built in translation; default labels `range(n)`.
@@ -35,6 +34,7 @@ Consolidated report, kept current each round. Four buckets: **I know / Decided /
 - **D11 — LP backend layering (round 2).** New optional module `_lp.py` holds the SciPy import (lazy) and `search_thresholds`; `_core.py` stays pure stdlib for every $k$ and gains `cycle_bounds`. The general-$k$ automatic path is wired in the public function (core → `_lp` → core), not inside core. LP formulation: homogeneous max-slack with $d_1=1$ (R11); strict-feasible iff optimum $t^*>0$.
 - **D12 — Spec restructure (round 3, author's choice).** Split into two files written linearly: `SPEC.md` is now the mathematician-readable pipeline (input→output spine, $k$-branch guiding the reader to the right function page, uniform Input/Output/Paper/Pseudocode headers); `SPEC-engineering.md` holds all software concerns (layers, public interface, translation/validation/bijection, LP mechanics, numerics, naming, packaging, errors, roadmap). Rationale: the previous single spec mixed engineering detail into the algorithm and lacked a navigable spine. Spec written linearly (small, tightly-coupled pipeline); parallel agents reserved for the implementation round where module write scopes are disjoint.
 - **D13 — Lean spec + separate pseudocode (rounds 4–5, author feedback).** The author asked only to specify input/output data and types — not to inline code into the spec. Round 4 overcorrected by folding all pseudocode into `SPEC.md` (heavy, code-like); round 5 reverts that. Final layout: `SPEC.md` is a lean data/interface contract (top-level input/output, data types, indexing-trap table, pipeline, per-function input/output table, tricks summary) with **no code**; the pseudocode lives in `docs/pseudocode.md` (P1–P11, R1–R12), linked from each function row. Multi-letter variables render as $\mathrm{ub},\mathrm{lb}$ (roman). Core data types in `SPEC.md`; public-facing types in engineering.
+- **D14 — Standalone numbered spec (round 6, author feedback).** The spec must be implementable **without the paper**. `SPEC.md` is now self-contained: minimal inline definitions, data types, and **numbered pseudocode** (L1, L2… per function) already in 0-based indexing; prose refers to internal line numbers, never the paper. Index shifts are encoded in the code, not left to the reader. All paper citations removed from `SPEC.md` and `SPEC-engineering.md`; provenance stays in `docs/definitions.md`, `docs/overview.md`, and this report. `docs/pseudocode.md` folded into `SPEC.md` and removed. Structure (author's choice): standalone `SPEC.md` + paper-free `SPEC-engineering.md`; only the math needed to implement is inline (full glossary stays in `docs/definitions.md`).
 
 ## To-decide (defaults stated; skipping is safe)
 
