@@ -5,10 +5,11 @@ Consolidated report, kept current each round. Four buckets: **I know / Decided /
 ## Reading guide
 
 1. This report's **Findings** first — F1 is a substantive gap in the published FW-var pseudocode, with a concrete trace on the paper's own Example 1B and the adopted fix.
-2. `SPEC.md` — the v1 design and interface (the hand-off document for implementation).
-3. `docs/pseudocode.md` — Python-like transcription P1–P8 and resolved conventions R1–R10.
-4. `docs/definitions.md` — every mathematical term, one per line, with source lines.
-5. `docs/overview.md` — the paper map for readers and other models.
+2. `SPEC.md` — the **mathematics**: an input→output pipeline with a $k$-branch and a page per core function. Read this to follow the algorithm.
+3. `SPEC-engineering.md` — the **software**: layers, public interface, translation/validation, LP backend, numerics, naming, packaging, errors, roadmap.
+4. `docs/pseudocode.md` — Python-like transcription P1–P11 and resolved conventions R1–R12.
+5. `docs/definitions.md` — every mathematical term, one per line, with source lines.
+6. `docs/overview.md` — the paper map for readers and other models.
 
 ## I know
 
@@ -32,6 +33,7 @@ Consolidated report, kept current each round. Four buckets: **I know / Decided /
 - **D9 — Naming.** Package `robinson_unif_emb`; public surface exactly `uniform_embedding` + `EmbeddingResult`; private modules and paper-flavored internal names (`pi`, `d`, `beta_plus`, `preceq`, `T`), mapping table in `SPEC.md` §6.
 - **D10 — Version control.** Repo initialized and this round committed (per AGENTS.md "commit per round"); no push. `.gitignore` added for `.DS_Store`/`__pycache__`. `sources/` committed unmodified (see T3).
 - **D11 — LP backend layering (round 2).** New optional module `_lp.py` holds the SciPy import (lazy) and `search_thresholds`; `_core.py` stays pure stdlib for every $k$ and gains `cycle_bounds`. The general-$k$ automatic path is wired in the public function (core → `_lp` → core), not inside core. LP formulation: homogeneous max-slack with $d_1=1$ (R11); strict-feasible iff optimum $t^*>0$.
+- **D12 — Spec restructure (round 3, author's choice).** Split into two files written linearly: `SPEC.md` is now the mathematician-readable pipeline (input→output spine, $k$-branch guiding the reader to the right function page, uniform Input/Output/Paper/Pseudocode headers); `SPEC-engineering.md` holds all software concerns (layers, public interface, translation/validation/bijection, LP mechanics, numerics, naming, packaging, errors, roadmap). Rationale: the previous single spec mixed engineering detail into the algorithm and lacked a navigable spine. Spec written linearly (small, tightly-coupled pipeline); parallel agents reserved for the implementation round where module write scopes are disjoint.
 
 ## To-decide (defaults stated; skipping is safe)
 
