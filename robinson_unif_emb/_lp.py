@@ -8,9 +8,12 @@ SciPy is imported lazily inside _solve; this module may raise ImportError
 def _solve(cycles, k):
     """The max-slack LP of SPEC.md §5c L1–L7 with d[0] = 1 substituted (L6).
 
+    cycles: list of (bound, walk) pairs from _core.cycle_bounds; k >= 3.
     Variables x = (d[1..k-1], t) (L1); minimize -t (L2); t is x[k-1].
     Returns (feasible, d): feasible iff status 0 and t* > EPS; d is the
     optimal threshold tuple (1.0, d[1], ..., d[k-1]) on status 0, else None.
+    Raises ImportError if SciPy is absent, RuntimeError on any solver
+    status other than 0 (optimal) or 2 (infeasible).
     """
     try:
         from scipy.optimize import linprog
@@ -52,7 +55,16 @@ def _solve(cycles, k):
 
 
 def search_thresholds(cycles, k):
-    """SPEC.md §5c: (d, None) with d[0] = 1 if feasible, else (None, witnesses)."""
+    """Decide feasibility of {b·d > 0 for each cycle bound; d in D^k},
+    by homogeneity with d[0] = 1 (SPEC.md §5c).
+
+    cycles: list of (bound, walk) pairs from _core.cycle_bounds; k >= 3.
+    Returns (d, None) with d a length-k float tuple, d[0] = 1, if the
+    optimal slack t* > EPS; otherwise (None, witnesses), where witnesses
+    is the deletion-filter set of walks, jointly contradictory with
+    d in D^k (no single one need fail, no count bound).
+    Raises ImportError (SciPy absent) or RuntimeError (solver failure).
+    """
     feasible, d = _solve(cycles, k)            # L1–L7
     if not feasible:                           # L8
         return None, minimal_witnesses(cycles, k)
@@ -60,7 +72,15 @@ def search_thresholds(cycles, k):
 
 
 def minimal_witnesses(cycles, k):
-    """Deletion filter, SPEC.md §5c L1–L5: walks of a jointly contradictory subset."""
+    """Deletion filter (SPEC.md §5c L1–L5): an irreducible infeasible
+    subset of the cycle system.
+
+    cycles: list of (bound, walk) pairs; k >= 3. Tries removing each
+    pair in turn and keeps the removal whenever the subset stays
+    infeasible (one LP per trial, same EPS rule). Returns the walks of
+    the surviving subset as a tuple; they are contradictory together
+    with d in D^k, and the count is not bounded by k.
+    """
     keep = list(cycles)                        # L1
     for (b, w) in cycles:                      # L2
         trial = [p for p in keep if p != (b, w)]   # L3  keep without (b, w)

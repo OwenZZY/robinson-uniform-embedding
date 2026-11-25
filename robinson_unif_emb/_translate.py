@@ -13,9 +13,13 @@ from numbers import Real
 
 
 # ---- validation predicates (SPEC-engineering.md §3, in order) ----
+# Each returns True iff the condition holds; to_internal raises
+# ValueError on the first False.
 
 def _square(A):
-    # predicate 1: square, n >= 1; non-sequences give False, not TypeError
+    """Predicate 1: A is a nonempty square nested sequence (n >= 1).
+    Non-sequences give False, not TypeError.
+    """
     if not hasattr(A, "__len__") or len(A) < 1:
         return False
     n = len(A)
@@ -23,31 +27,36 @@ def _square(A):
 
 
 def _integral(A):
-    # predicate 2a: integer-typed entries (int and numpy integers via
-    # __index__; floats such as 2.0 are rejected)
+    """Predicate 2a: every entry is integer-typed (int or a numpy
+    integer, via __index__); floats such as 2.0 are rejected.
+    """
     return all(hasattr(x, "__index__") for row in A for x in row)
 
 
 def _in_range(A, k):
-    # predicate 2b: entries in {0, ..., k}, k = A[0][0]
+    """Predicate 2b: every entry lies in {0, ..., k}, k = A[0][0]."""
     return all(0 <= x <= k for row in A for x in row)
 
 
 def _symmetric(A):
-    # predicate 3: a[u][v] == a[v][u]
+    """Predicate 3: A[u][v] == A[v][u] for all u, v."""
     n = len(A)
     return all(A[u][v] == A[v][u] for u in range(n) for v in range(u + 1, n))
 
 
 def _diagonal_max(A, k):
-    # predicate 4: diagonal constant and equal to the maximum k
+    """Predicate 4: the diagonal is constant and equal to the maximum
+    entry k.
+    """
     n = len(A)
     return (all(A[i][i] == k for i in range(n))
             and k == max(x for row in A for x in row))
 
 
 def _robinson(A):
-    # predicate 5: a[u][v] >= a[u][w] and a[v][w] >= a[u][w] for u < v < w
+    """Predicate 5: A[u][v] >= A[u][w] and A[v][w] >= A[u][w] for all
+    u < v < w (entries do not increase away from the diagonal).
+    """
     n = len(A)
     return all(A[u][v] >= A[u][w] and A[v][w] >= A[u][w]
                for u in range(n) for v in range(u + 1, n)
@@ -55,7 +64,9 @@ def _robinson(A):
 
 
 def _labels_ok(labels, n):
-    # predicate 6 (if given): length n, hashable, unique
+    """Predicate 6 (labels given): exactly n hashable, pairwise distinct
+    identifiers, so labels[i] <-> i is a bijection.
+    """
     if len(labels) != n or not all(isinstance(x, Hashable) for x in labels):
         return False
     try:
@@ -65,8 +76,9 @@ def _labels_ok(labels, n):
 
 
 def _thresholds_ok(thresholds, k):
-    # predicate 7 (if given): length k, real, strictly decreasing, positive
-    # (under strict decrease, all-positive is equivalent to last > 0)
+    """Predicate 7 (thresholds given): k real numbers, strictly
+    decreasing and positive — a candidate d in D^k.
+    """
     if len(thresholds) != k or not all(isinstance(x, Real) for x in thresholds):
         return False
     return (all(x > y for x, y in zip(thresholds, thresholds[1:]))
@@ -78,9 +90,13 @@ def _thresholds_ok(thresholds, k):
 def to_internal(A, labels, thresholds):
     """Validate and convert external input to the core's data types.
 
-    Returns (a, d0, labels_tuple): a is a tuple of tuples of int,
-    d0 a tuple of Fraction or None, labels_tuple the external identifiers
-    in matrix order (default tuple(range(n))).
+    A: square nested sequence or numpy array of ints (duck-typed via
+    tolist). labels: optional sequence of n unique hashables. thresholds:
+    optional candidate d, k strictly decreasing positive reals.
+    Returns (a, d0, labels_tuple): a is a tuple of tuples of int;
+    d0 a tuple of Fraction (floats by exact binary conversion) or None;
+    labels_tuple the external identifiers in matrix order (default
+    tuple(range(n))). Raises ValueError on the first failed predicate.
     """
     if hasattr(A, "tolist"):                   # numpy duck-typing
         A = A.tolist()
@@ -110,10 +126,15 @@ def to_internal(A, labels, thresholds):
 
 
 def map_positions(pi, labels):
-    """Embedding back to external identifiers: {labels[i]: float(pi[i])}."""
+    """Embedding back to external identifiers: {labels[i]: float(pi[i])}.
+    pi is the core's length-n list; labels the bijection in matrix order.
+    """
     return {labels[i]: float(pi[i]) for i in range(len(pi))}
 
 
 def map_cycles(witnesses, labels):
-    """Witness walks back to external identifiers; first == last preserved."""
+    """Witness walks back to external identifiers: a tuple of label
+    tuples, first == last preserved. witnesses is the core's tuple of
+    0-based vertex walks.
+    """
     return tuple(tuple(labels[i] for i in w) for w in witnesses)
