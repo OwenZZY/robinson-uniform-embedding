@@ -1,6 +1,6 @@
 # SPEC — engineering (software design)
 
-Companion to [`SPEC.md`](SPEC.md), which holds the mathematical pipeline. This document covers everything that is **not** the algorithm: layers, the public interface, input handling, the LP backend, numerics, naming, packaging, errors, and the implementation plan. Notation and pseudocode: [`docs/definitions.md`](docs/definitions.md), [`docs/pseudocode.md`](docs/pseudocode.md) (conventions R1–R12).
+Companion to [`SPEC.md`](SPEC.md), which is the self-contained algorithm spec (data types, indexing, inline pseudocode P1–P11, conventions R1–R12). This document covers everything that is **not** the algorithm: layers, the public interface, input handling, the LP-backend mechanics, numerics policy, naming, packaging, errors, and the implementation plan. Glossary: [`docs/definitions.md`](docs/definitions.md).
 
 ## 1. Layers and modules
 
@@ -91,7 +91,7 @@ def search_thresholds(cycles, k):     # cycles: list[(bound, walk)] from core.cy
 ```
 
 - **Import.** `from scipy.optimize import linprog` inside the function; absent → `ImportError("install scipy for k>2 automatic search: pip install scipy")`.
-- **Formulation** (R11). Variables $(d_1,\dots,d_k,t)$; minimize $-t$ (maximize slack) subject to $\mathbf b^\top\mathbf d - t\ge0$ per cycle bound; $d_i-d_{i+1}-t\ge0$; $d_k-t\ge0$; equality $d_1=1$; bounds $d_i\in[0,1]$, $t\le1$. Method `highs`.
+- **Formulation.** The LP itself (variables, constraints, $d_1=1$ normalization, max-slack $t$) is specified in `SPEC.md` §6c (P10); this module only supplies the SciPy call.
 - **Decision.** Strict-feasible iff optimum $t^*>0$; return $\mathbf d=(d_1,\dots,d_k)$. If infeasible or $t^*\le0$: recover $\le k$ witness cycles from the Farkas certificate / dual multipliers (L558); if the backend exposes no certificate, fall back to the cycle constraints active at the optimum.
 - **Dependency.** SciPy is optional (extra `lp`); modes 2a/2b never import it.
 
@@ -104,18 +104,7 @@ def search_thresholds(cycles, k):     # cycles: list[(bound, walk)] from core.cy
 
 ## 6. Internal data representations
 
-| Object | Representation | Notes |
-|---|---|---|
-| matrix `a` | `tuple[tuple[int,...],...]`, $n\times n$, 0-based | built by translation |
-| `n`, `k` | `len(a)`, `a[0][0]` | diagonal all $k$ (trusted) |
-| walk `w` | `tuple[int,...]` | concat `w1 + w2[1:]`; reverse `w[::-1]` |
-| bound `b` | `tuple[int,...]` length $k$ | `None` = undefined |
-| cell | $k=2$: `dict[(t,chain),(w,b)]`; general: `list[(w,b)]` antichain | minimal UBWs per ordered pair |
-| table `T` | `list[list[cell]]`, $n\times n$ | diagonal holds cycles |
-| thresholds `d` | tuple of `Fraction` (auto $k=2$), user type (given), or `float` (LP) | core arithmetic generic over type |
-| positions `pi` | list of the same numeric type as `d` | `pi[0]=0` |
-
-Lower bounds are never stored: read by reversal from $T[v][i]$ (SPEC.md Stage 3).
+The core data types (`a`, `n`, `k`, walk, bound, cell, `T`, `d`, `pi`) are specified in `SPEC.md` §1 — that is the algorithm's contract. Translation's job is to build `a` (tuple of tuples of `int`) from the external input and to map `pi`/witnesses back to labels (§3). The only public-facing types are `EmbeddingResult` and the `labels`/`thresholds` parameters (§2). Lower bounds are never stored; read by reversal from `T[v][i]` (`SPEC.md` §7).
 
 ## 7. Naming
 
@@ -131,7 +120,7 @@ Lower bounds are never stored: read by reversal from $T[v][i]$ (SPEC.md Stage 3)
 | $\beta^+(W)$ | `walk_bound` |
 | $\preceq$ | `preceq` |
 | UBW table | `T`, cells `T[i][j]` |
-| $ub_v, lb_v$ | `ub`, `lb` (locals) |
+| $\mathrm{ub}_v, \mathrm{lb}_v$ | `ub`, `lb` (locals) |
 | FW-var | `bound_generation` |
 | $d_2/d_1$ window | `ratio_bounds` → `(lo, hi)` |
 | cycle inequalities | `cycle_bounds` (core) → `search_thresholds` (`_lp`) |

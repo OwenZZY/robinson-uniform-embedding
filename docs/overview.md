@@ -1,7 +1,7 @@
 # Paper overview — Uniform Embeddings for Robinson Similarity Matrices
 
 Janssen–Zhang, arXiv:2105.09197v1 (May 2021). LaTeX source: `sources/arXiv-2105.09197v1/ArXiv_ver.tex`.
-Companion files: `docs/definitions.md` (every term, one per line, with source lines) and `docs/pseudocode.md` (Python-like transcription with resolved conventions). This overview is the reading map.
+Companion files: `SPEC.md` (the self-contained algorithm spec — data types, indexing, inline pseudocode P1–P11, tricks R1–R12) and `docs/definitions.md` (every term, one per line, with source lines). This overview is the reading map.
 
 ## The problem
 
@@ -18,7 +18,7 @@ Equivalently: $A=\sum_{t=1}^k A^{(t)}$ decomposes into nested indifference (unit
 ## The construction formula (§4.2)
 
 Given feasible $\mathbf d$ and the bound tables: $\Pi(1)=0$, and for $v\ge2$,
-$\Pi(v)=(ub_v+lb_v)/2$ where $ub_v$ ($lb_v$) is the smallest (largest) value of $\Pi(i)+{}$best upper (lower) bound on $(i,v)$, over $i<v$. The midpoint lands strictly inside every required interval. See `docs/pseudocode.md` P6 for the executable form, including the empty-upper-set convention.
+$\Pi(v)=(\mathrm{ub}_v+\mathrm{lb}_v)/2$ where $\mathrm{ub}_v$ ($\mathrm{lb}_v$) is the smallest (largest) value of $\Pi(i)+{}$best upper (lower) bound on $(i,v)$, over $i<v$. The midpoint lands strictly inside every required interval. See `SPEC.md` §7 (P6) for the executable form, including the empty-upper-set convention.
 
 ## The $k=2$ pipeline (§5.3.1)
 
@@ -33,8 +33,8 @@ The $k=2$ speed-up: $\mathbb Z^2_n$ partitions into $2n$ chains $S_t^1,S_t^2$ (`
 ## Reading order for implementers
 
 1. `docs/definitions.md` — notation and terms.
-2. `docs/pseudocode.md` — conventions R1–R10, then P1–P8.
-3. `SPEC.md` — layers, public interface, naming.
+2. `SPEC.md` — data types (§1), the indexing trap (§2), inline pseudocode P1–P11 (§4–§7), tricks R1–R12 (§8).
+3. `SPEC-engineering.md` — public interface, translation, LP backend, naming, packaging.
 4. `REPORT.md` — findings, especially F1 (a gap in the published FW-var pseudocode and the adopted fix).
 
 ## Section map of the source

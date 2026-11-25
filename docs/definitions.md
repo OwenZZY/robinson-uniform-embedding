@@ -77,9 +77,9 @@ One term per line. Terms marked **[proof-only]** appear only in the Appendix and
 |---|---|---|
 | Bound-Generation / FW-var | Floyd–Warshall-style enumeration of minimal upper-bound walks between all pairs; lower bounds obtained by reversal. | Algorithm `alg:FW-mod`, L508–553 |
 | UBW table | Lookup $\operatorname{UBW}(i,j)$ = minimal elements (under $\preceq$ on $\beta^+$) of upper-bound walks/paths from $i$ to $j$. | alg:FW-mod output, L520–524 |
-| $ub_v$ | $ub_v=\min_{i\in[v-1]}\big(\Pi(i)+\min\{\mathbf b^\top\mathbf d:\mathbf b\in\operatorname{UpperBounds}(i,v)\}\big)$. | eq. `equi:ubv and lbv`, L350–353 |
-| $lb_v$ | $lb_v=\max_{i\in[v-1]}\big(\Pi(i)+\max\{\mathbf a^\top\mathbf d:\mathbf a\in\operatorname{LowerBounds}(i,v)\}\big)$. | eq. `equi:ubv and lbv`, L350–353 |
-| Embedding formula | $\Pi(1)=0$; $\Pi(v)=(ub_v+lb_v)/2$ for $2\le v\le n$; yields a uniform embedding for any feasible $\mathbf d$. | eq. `alg:embedding algorithm`, L343–348; lemmas L357–426 |
+| $\mathrm{ub}_v$ | $\mathrm{ub}_v=\min_{i\in[v-1]}\big(\Pi(i)+\min\{\mathbf b^\top\mathbf d:\mathbf b\in\operatorname{UpperBounds}(i,v)\}\big)$. | eq. `equi:ubv and lbv`, L350–353 |
+| $\mathrm{lb}_v$ | $\mathrm{lb}_v=\max_{i\in[v-1]}\big(\Pi(i)+\max\{\mathbf a^\top\mathbf d:\mathbf a\in\operatorname{LowerBounds}(i,v)\}\big)$. | eq. `equi:ubv and lbv`, L350–353 |
+| Embedding formula | $\Pi(1)=0$; $\Pi(v)=(\mathrm{ub}_v+\mathrm{lb}_v)/2$ for $2\le v\le n$; yields a uniform embedding for any feasible $\mathbf d$. | eq. `alg:embedding algorithm`, L343–348; lemmas L357–426 |
 | Uniform Embedding Algorithm ($k=2$) | Steps: (1) generate minimal bounds, extract cycles from $\operatorname{UBW}(v,v)$; (2) convert each cycle bound to a ratio bound on $d_2/d_1$, keep witnesses $C_1,C_2$; (3) if largest lower $\ge$ smallest upper: NO SOLUTION, return $C_1,C_2$; (4) else pick $d_1,d_2$ with ratio strictly between; (5) build $\Pi$ by the embedding formula, return it. | §5.3.1, L574–583 |
 | Stated complexities | FW-var $O(n^3M^3)$ general; $k=2$ bound generation $O(n^5)$ via chain slots, cycle inequalities $O(n^2)$, embedding $O(n^3)$, overall $O(N^{2.5})$; LP route $O(n^4)$ (Vaidya). Recorded as stated, not re-derived. | L556, L585–594 |
 
