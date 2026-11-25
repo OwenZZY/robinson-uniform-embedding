@@ -1,6 +1,6 @@
 # SPEC — engineering (software design)
 
-Companion to [`SPEC.md`](SPEC.md), which is the self-contained algorithm spec (data types, indexing, inline pseudocode P1–P11, conventions R1–R12). This document covers everything that is **not** the algorithm: layers, the public interface, input handling, the LP-backend mechanics, numerics policy, naming, packaging, errors, and the implementation plan. Glossary: [`docs/definitions.md`](docs/definitions.md).
+Companion to [`SPEC.md`](SPEC.md), the lean data/interface contract (data types, indexing, per-function input/output). The step-by-step pseudocode (P1–P11) and conventions R1–R12 are in [`docs/pseudocode.md`](docs/pseudocode.md). This document covers everything that is **not** the algorithm: layers, the public interface, input handling, the LP-backend mechanics, numerics policy, naming, packaging, errors, and the implementation plan. Glossary: [`docs/definitions.md`](docs/definitions.md).
 
 ## 1. Layers and modules
 
@@ -91,7 +91,7 @@ def search_thresholds(cycles, k):     # cycles: list[(bound, walk)] from core.cy
 ```
 
 - **Import.** `from scipy.optimize import linprog` inside the function; absent → `ImportError("install scipy for k>2 automatic search: pip install scipy")`.
-- **Formulation.** The LP itself (variables, constraints, $d_1=1$ normalization, max-slack $t$) is specified in `SPEC.md` §6c (P10); this module only supplies the SciPy call.
+- **Formulation.** The LP itself (variables, constraints, $d_1=1$ normalization, max-slack $t$) is specified in `docs/pseudocode.md` P10 (R11); this module only supplies the SciPy call.
 - **Decision.** Strict-feasible iff optimum $t^*>0$; return $\mathbf d=(d_1,\dots,d_k)$. If infeasible or $t^*\le0$: recover $\le k$ witness cycles from the Farkas certificate / dual multipliers (L558); if the backend exposes no certificate, fall back to the cycle constraints active at the optimum.
 - **Dependency.** SciPy is optional (extra `lp`); modes 2a/2b never import it.
 
@@ -104,7 +104,7 @@ def search_thresholds(cycles, k):     # cycles: list[(bound, walk)] from core.cy
 
 ## 6. Internal data representations
 
-The core data types (`a`, `n`, `k`, walk, bound, cell, `T`, `d`, `pi`) are specified in `SPEC.md` §1 — that is the algorithm's contract. Translation's job is to build `a` (tuple of tuples of `int`) from the external input and to map `pi`/witnesses back to labels (§3). The only public-facing types are `EmbeddingResult` and the `labels`/`thresholds` parameters (§2). Lower bounds are never stored; read by reversal from `T[v][i]` (`SPEC.md` §7).
+The core data types (`a`, `n`, `k`, walk, bound, cell, `T`, `d`, `pi`) are specified in `SPEC.md` §2 — that is the algorithm's contract. Translation's job is to build `a` (tuple of tuples of `int`) from the external input and to map `pi`/witnesses back to labels (§3). The only public-facing types are `EmbeddingResult` and the `labels`/`thresholds` parameters (§2). Lower bounds are never stored; read by reversal from `T[v][i]` (`SPEC.md` §5, pseudocode P6).
 
 ## 7. Naming
 
