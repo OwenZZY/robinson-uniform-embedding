@@ -134,11 +134,13 @@ def minimal_in(b, cell):
 
 
 def insert_minimal(cell, w, b):
-    """Antichain insertion into a list cell: skip if a stored bound is
+    """Antichain insertion into a list cell: skip if b is already stored
+    exactly (equal bound, possibly a different walk) or a stored bound is
     strictly ≼-below b; otherwise add (w, b) and remove every stored
-    pair whose bound is strictly ≼-above b. Equal bounds may coexist
-    with different walks.
+    pair whose bound is strictly ≼-above b. One pair per distinct bound.
     """
+    if any(c == b for (_, c) in cell_items(cell)):
+        return
     if not minimal_in(b, cell):
         return
     cell[:] = [(w2, c) for (w2, c) in cell

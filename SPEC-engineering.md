@@ -71,12 +71,12 @@ res.feasible, res.positions, res.thresholds
 **Validation predicates** (boolean, evaluated in order; first `False` → `ValueError` with a plain message). All here, none in core:
 
 1. square, $n\ge1$;
-2. entries integral (numpy integer types accepted) in $\{0,\dots,k\}$, $k=A[0][0]$;
+2. entries integral (numpy integer types accepted) in $\{0,\dots,k\}$, $k=A[0][0]\ge1$;
 3. symmetric;
 4. diagonal constant and equal to the maximum $k$;
 5. Robinson: $a_{u,v}\ge a_{u,w}$ and $a_{v,w}\ge a_{u,w}$ for all $u<v<w$;
 6. `labels` (if given): length $n$, hashable, unique;
-7. `thresholds` (if given): length $k$, strictly decreasing, positive, real; **converted to `Fraction`** (floats by exact binary conversion).
+7. `thresholds` (if given): length $k$, strictly decreasing, positive, finite, real; **converted to `Fraction`** (floats by exact binary conversion).
 
 Any $k\ge1$ is accepted; mode selection needs no input predicate. SciPy availability is checked in `_lp.py`, not here.
 
@@ -198,4 +198,4 @@ The API is fixed by `SPEC.md` + this document. Steps 1–2 touch the same file (
 
 ## 11. Out of scope for v1
 
-Seriation (recovering order from an unordered matrix); graphon inputs; NetworkX adapters; a pure-Python LP fallback; performance engineering beyond the chain-slot trick; proofs and complexity analysis in comments. A combinatorial feasibility test for $k\ge3$ is an open problem (none is known); not an implementation target. A completeness proof for the pruned $k>2$ table (`SPEC.md` §4) is also out of scope; the verification step is the v1 safeguard.
+Seriation (recovering order from an unordered matrix); graphon inputs; NetworkX adapters; a pure-Python LP fallback; performance engineering beyond the chain-slot trick; proofs and complexity analysis in comments. A combinatorial feasibility test for $k\ge3$ is an open problem (none is known); not an implementation target. A completeness proof for the pruned $k>2$ table (`SPEC.md` §4) is also out of scope; the verification step is the v1 safeguard. The all-zero matrix ($k=0$) is outside the input domain ($k\ge1$, no threshold vector exists) and is rejected by predicate 2.

@@ -7,6 +7,7 @@ the first failure raises ValueError immediately. The core never sees
 external formats. numpy is duck-typed via tolist(); no third-party imports.
 """
 
+import math
 from collections.abc import Hashable
 from fractions import Fraction
 from numbers import Real
@@ -38,6 +39,13 @@ def _in_range(A, k):
     return all(0 <= x <= k for row in A for x in row)
 
 
+def _k_at_least_one(k):
+    """Predicate 2c: k >= 1. The all-zero matrix (k = 0) is the only
+    k = 0 Robinson matrix and has no threshold vector (D^k needs k >= 1).
+    """
+    return k >= 1
+
+
 def _symmetric(A):
     """Predicate 3: A[u][v] == A[v][u] for all u, v."""
     n = len(A)
@@ -64,9 +72,12 @@ def _robinson(A):
 
 
 def _labels_ok(labels, n):
-    """Predicate 6 (labels given): exactly n hashable, pairwise distinct
-    identifiers, so labels[i] <-> i is a bijection.
+    """Predicate 6 (labels given): a sized sequence of exactly n
+    hashable, pairwise distinct identifiers, so labels[i] <-> i is a
+    bijection. Objects without __len__ (generators/iterators) fail.
     """
+    if not hasattr(labels, "__len__"):
+        return False
     if len(labels) != n or not all(isinstance(x, Hashable) for x in labels):
         return False
     try:
@@ -76,10 +87,17 @@ def _labels_ok(labels, n):
 
 
 def _thresholds_ok(thresholds, k):
-    """Predicate 7 (thresholds given): k real numbers, strictly
-    decreasing and positive — a candidate d in D^k.
+    """Predicate 7 (thresholds given): a sized sequence of k real
+    numbers, strictly decreasing, positive and finite — a candidate
+    d in D^k. Objects without __len__ fail; math.isfinite is called
+    only on float-like values (int/Fraction are finite by construction).
     """
+    if not hasattr(thresholds, "__len__"):
+        return False
     if len(thresholds) != k or not all(isinstance(x, Real) for x in thresholds):
+        return False
+    if any(not isinstance(x, (int, Fraction)) and not math.isfinite(x)
+           for x in thresholds):
         return False
     return (all(x > y for x, y in zip(thresholds, thresholds[1:]))
             and all(x > 0 for x in thresholds))
@@ -105,6 +123,8 @@ def to_internal(A, labels, thresholds):
     if not _integral(A):
         raise ValueError("entries of A must be integer-typed (floats such as 2.0 are rejected)")
     k = A[0][0]
+    if not _k_at_least_one(k):
+        raise ValueError("k must be at least 1: the all-zero matrix has no threshold vector")
     if not _in_range(A, k):
         raise ValueError("entries of A must lie in {0, ..., k} with k = A[0][0]")
     if not _symmetric(A):

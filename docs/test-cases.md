@@ -14,9 +14,9 @@ python tests/acceptance.py
 
 Without SciPy the four `k>2` automatic/joint cases and G4 are reported `SKIP`; without numpy the numpy-input case is skipped too. The suite exits non-zero on any failure.
 
-## Current status (round 11 tree)
+## Current status (round 13, all groups pass)
 
-With SciPy: **16 passed, 4 failed, 0 skipped**. The four failures are exactly the round-13 hardening targets **G1–G4** (see `REPORT.md` T12–T15 and the round-11 status section); everything else passes. Without SciPy (with numpy): 13 passed, 3 failed (G1–G3), 4 skipped; without numpy one more skip. After the hardening round the suite must be all-green (with and without SciPy), and this file plus the suite header should be updated to say so.
+With SciPy: **20 passed, 0 failed, 0 skipped**. Without SciPy (with numpy): **16 passed, 0 failed, 4 skipped**; without numpy one more skip (15/0/5). The round-13 hardening targets G1–G4 are fixed (see `REPORT.md`, T12–T15 resolved); the recorded expectations are unchanged. The suite exits non-zero on any failure.
 
 ## What is covered
 
@@ -67,12 +67,12 @@ Three binary Robinson matrices (the all-ones 3×3, the 2×2 identity, and a 3-no
 
 `n=1` at k=1 and k=2; `n=2` with a null edge at k=2; labels mapping (B with labels `a..f`, the witness must be a tuple of labels with first == last); numpy integer input accepted, numpy float input rejected; nine invalid inputs must raise `ValueError` (non-square, ragged, float entries, asymmetric, diagonal not max, not Robinson, wrong/duplicate labels, wrong/unordered thresholds).
 
-### Hardening targets G1–G4 (round 13)
+### Hardening targets G1–G4 (round 13, all fixed)
 
-- **G1** `((0,0),(0,0))` → `ValueError` (the all-zero matrix is outside the `k≥1` domain). Currently `TypeError`.
-- **G2** generator `labels`, generator `thresholds`, and `thresholds=(inf, 1)` → `ValueError`. Currently `TypeError` / `OverflowError`.
-- **G3** in `k≠2` cells, the distinct-bound count equals the pair count (no duplicate bounds per cell). Currently A₃'s `T[0][0]` has 8 pairs / 4 distinct.
-- **G4** the `k>2` verification runs on `Fraction` `d`/`π` (the wrapper converts before calling `verify_embedding`). Currently it runs on floats.
+- **G1** `((0,0),(0,0))` → `ValueError` (the all-zero matrix is outside the `k≥1` domain). Was `TypeError`; fixed in round 13.
+- **G2** generator `labels`, generator `thresholds`, and `thresholds=(inf, 1)` → `ValueError`. Was `TypeError` / `OverflowError`; fixed in round 13.
+- **G3** in `k≠2` cells, the distinct-bound count equals the pair count (no duplicate bounds per cell). Was 8 pairs / 4 distinct in A₃'s `T[0][0]`; fixed in round 13.
+- **G4** the `k>2` verification runs on `Fraction` `d`/`π` (the wrapper converts before calling `verify_embedding`). Ran on floats; fixed in round 13.
 
 ## How the recorded values were produced
 

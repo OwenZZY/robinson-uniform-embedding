@@ -115,7 +115,7 @@ L3  elif minimal_in(b, cell): insert_minimal(cell, w, b)
 
 Cell operations:
 - `minimal_in(b, cell)`: no stored bound `c` with `preceq(c,b)` and `c≠b`.
-- `insert_minimal(cell, w, b)`: skip if not `minimal_in(b, cell)`; otherwise add `(w,b)` and remove every stored `(w',c)` with `preceq(b,c)` and `b≠c`.
+- `insert_minimal(cell, w, b)`: skip if a stored bound equals `b`; skip if not `minimal_in(b, cell)`; otherwise add `(w,b)` and remove every stored `(w',c)` with `preceq(b,c)` and `b≠c`.
 - `k=2` cells are chain slots (insertion O(1)):
 
 ```text

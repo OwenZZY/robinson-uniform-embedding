@@ -6,6 +6,7 @@ when the k>2 automatic threshold search is needed.
 """
 
 from dataclasses import dataclass
+from fractions import Fraction
 
 from . import _core, _translate
 
@@ -62,7 +63,10 @@ def uniform_embedding(A, labels=None, thresholds=None) -> EmbeddingResult:
     d, pi = _core.uniform_embedding_core(a, d0, search)
     if d is None:                              # pi holds witnesses here
         return EmbeddingResult(False, None, None, _translate.map_cycles(pi, labs))
-    if not _core.verify_embedding(a, d, pi):   # every success is verified
+    # verify on exact rationals (SPEC-engineering.md §5); floats go to the user
+    d_exact = tuple(Fraction(x) for x in d)
+    pi_exact = [Fraction(x) for x in pi]
+    if not _core.verify_embedding(a, d_exact, pi_exact):   # every success is verified
         raise RuntimeError("numerical failure: the constructed embedding did not pass verification "
                            "(k>2: try a different d or report the pruned-table limitation; "
                            "k=1/k=2: report the table bug)")

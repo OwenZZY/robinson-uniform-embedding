@@ -10,8 +10,8 @@ cases run only if SciPy is importable; otherwise they are reported SKIP.
 No third-party package is needed for the rest.
 
 Groups G1-G4 encode the round-13 hardening target (see REPORT.md T12-T15 and
-the review notes). On the round-11 tree they FAIL; they must pass after the
-fixes. Everything else passes on the round-11 tree.
+the review notes). They FAILED on the round-11 tree; as of round 13 all
+groups pass, with and without SciPy. The recorded expectations are unchanged.
 
 This file is deliberately self-contained: it re-implements the edge-bound
 algebra and the embedding check independently of the package, so a broken
