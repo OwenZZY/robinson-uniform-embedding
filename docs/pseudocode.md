@@ -19,6 +19,8 @@ The paper's pseudocode and formulas leave a few points implicit. Each is resolve
 - **R8 — Ratio window.** $r=d_2/d_1$ must lie in $(0,1)$ by the definition of $\mathbb D^2$, independently of any cycle. Intersect the cycle-derived window with $(0,1)$; if empty, NO SOLUTION. Scale-free choice $d_1=1$, $d_2=r$.
 - **R9 — Chain membership boundary.** The rule of L585 assigns $a_2=0$ to chain 2. Although $(-t,0)$ is listed in $S_t^1$ (L495), it is $\preceq$-below every element of $S_t^2$, so the assignment is consistent for per-chain-minimum bookkeeping. Allow $t=0$ (the zero bound) as a slot.
 - **R10 — Exact arithmetic.** All $k=2$ ratio bounds are rational ($-a_1/a_2$); use `fractions.Fraction` internally so every strict inequality is decided exactly. Convert to `float` only at the public boundary.
+- **R11 — LP strictness (general $k$).** The cycle system is homogeneous in $\mathbf d$, so normalize $d_1=1$ and maximize the minimum slack $t$: $\mathbf b^\top\mathbf d\ge t$ per minimal cycle bound, $d_i-d_{i+1}\ge t$, $d_k\ge t$. Strict-feasible iff the optimum $t^*>0$. Infeasible → a Farkas certificate of $\le k$ witness cycles (L558).
+- **R12 — Optional backend.** The LP lives in `_lp.py`, importing SciPy lazily; `_core.py` stays pure stdlib for every $k$. The package imports and the $k=2$ / given-thresholds modes run without SciPy; the $k\ne2$ automatic search raises `ImportError` with an install hint if SciPy is absent.
 
 **Walks vs paths.** The table stores walks, possibly with repeated vertices (concatenation can create cycles). For a feasible $\mathbf d$, the loop-removal lemma (`lemma:loopless`, L318–323) gives $\min$ over walks $=\min$ over paths, so the embedding formula is unaffected. Diagonal cells may contain non-simple closed walks; their bounds are sums of cycle bounds, so the extra inequalities are harmless, and a witness can be reduced to a simple cycle (P5).
 
@@ -167,7 +169,7 @@ def solve_k2(a):
     return d, pi
 ```
 
-## P8 — General $k$ with supplied thresholds (design hook; see SPEC, to-decide T1)
+## P8 — General $k$ with supplied thresholds (any $k$, no dependencies)
 
 For any $k$, a *given* $\mathbf d\in\mathbb D^k$ can be tested combinatorially against the cycle system (no LP needed), then used for construction:
 
@@ -181,4 +183,49 @@ def solve_with_thresholds(a, d):
     return d, embedding_from_bounds(a, d, T)
 ```
 
-Finding a feasible $\mathbf d$ for $k>2$ (LP over the cycle inequalities, §5 L435) is deferred; see `SPEC.md`.
+Finding a feasible $\mathbf d$ automatically for $k\ne2$ is the LP search of P9–P11 (SciPy backend, R11–R12).
+
+## P9 — Extract minimal cycle bounds (step 1 L578; duplicates L588)
+
+```python
+def cycle_bounds(T):                  # any k; reads diagonal cells UBW(v,v)
+    seen = {}                         # bound tuple → one witness walk
+    for v in range(n):
+        for (w, b) in T[v][v]:
+            if b not in seen:         # same bound recurs at each vertex of its cycle
+                seen[b] = simple_cycle(w)
+    return [(b, seen[b]) for b in seen]
+```
+
+## P10 — General-$k$ threshold search via LP (§5 opening L435; certificate L558; R11)
+
+```python
+# Lives in _lp.py; SciPy imported lazily inside the function (R12).
+def search_thresholds(cycles, k):     # cycles: list[(bound, walk)] from P9
+    from scipy.optimize import linprog        # ImportError → install hint (R12)
+    # Variables x = (d_1..d_k, t). Maximize t  ⇔  minimize -t.
+    # Inequalities (≥ 0 form), with d_1 = 1 fixed by homogeneity:
+    #   b·d - t ≥ 0            for each (b, _) in cycles     (β+(C)·d > 0)
+    #   d_i - d_{i+1} - t ≥ 0  for i in 1..k-1               (d_i > d_{i+1})
+    #   d_k - t ≥ 0                                        (d_k > 0)
+    res = linprog(c=[0]*k + [-1], A_ub=..., b_ub=...,
+                  bounds=[(0, 1)]*k + [(None, 1)],
+                  constraints={"type": "eq", ...d_1 = 1...}, method="highs")
+    if res.status == INFEASIBLE or res.x[-1] <= 0:
+        return None, farkas_cycles(res, cycles)   # ≤ k witness walks (L558)
+    return tuple(res.x[:k]), None                 # feasible d, d_1 = 1
+```
+
+`farkas_cycles`: read the Farkas proof / dual multipliers and return the cycles with positive multiplier; if the backend exposes no certificate, fall back to the cycle constraints active at the optimum.
+
+## P11 — General-$k$ orchestration (wired in the public function, not in core)
+
+```python
+def solve_general(a):                 # k != 2, no thresholds
+    T = bound_generation(a)
+    cycles = cycle_bounds(T)
+    d, witnesses = search_thresholds(cycles, k)   # _lp.py (P10)
+    if d is None:
+        return NO_SOLUTION, witnesses
+    return d, embedding_from_bounds(a, d, T)
+```

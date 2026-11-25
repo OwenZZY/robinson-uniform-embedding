@@ -17,12 +17,13 @@ Consolidated report, kept current each round. Four buckets: **I know / Decided /
 - The algorithmic content transcribed: edge bounds $\beta^\pm$, walk bounds, the prefix order $\preceq$, FW-var bound generation, the $k=2$ chain-slot trick and ratio test, the embedding formula, the $k=2$ pipeline, and a general-$k$ given-thresholds hook.
 - The two Example 1 matrices are recorded as fixtures and hand-checked: $A$'s published embedding satisfies every pair inequality; $B$'s witness cycle $\langle1,2,6,4,1\rangle$ (upper-bound orientation) has bound $(0,0)$.
 - Constraints honored: nothing in `sources/` modified; no proofs or complexity analysis added (the paper's stated complexities are recorded as statements only); no tests/README/examples built.
+- Round 2 scope clarification (with the author): the problem is general $\mathcal S^n[k]$; the core (bound generation + construction) is $k$-generic and was never dropped. Only the combinatorial *threshold search* is $k=2$-specific; $k>2$ feasibility is an LP per the paper (L435), with combinatorial $k\ge3$ left open (L602). v1 now implements the full general-$k$ pipeline (D3, D11).
 
 ## Decided
 
 - **D1 — Deliverables.** `docs/definitions.md`, `docs/pseudocode.md`, `docs/overview.md`; `SPEC.md` (v1, supersedes spec0); this report.
 - **D2 — Architecture.** Three layers: core `_core.py` (paper algorithms, trusts input, zero try/except/raise, pure stdlib), translation `_translate.py` (validation predicates + immediate halt, format conversion, label bijection), outer (user notebook). No intermediate layer needed. Single public function `uniform_embedding(A, labels=None, thresholds=None)` returning a frozen `EmbeddingResult` (`feasible`, `positions`, `thresholds`, `cycles`).
-- **D3 — v1 scope.** The complete $k=2$ combinatorial algorithm, plus construction from user-supplied thresholds for any $k$ (cycle-system check is combinatorial, no LP). LP search for $k>2$ deferred.
+- **D3 — v1 scope (revised round 2).** Complete for all of $\mathcal S^n[k]$. $k=2$: combinatorial algorithm, no dependencies. Any $k$ with supplied thresholds: combinatorial cycle-system check + construction. $k\ne2$ without thresholds: automatic search via LP feasibility over the cycle system, SciPy as an optional dependency; infeasibility returns Farkas witness cycles. The problem is general $k$; only the *combinatorial threshold search* is $k=2$-specific (ratio collapse, §5.3). For $k>2$ the paper itself routes feasibility through LP (L435) and leaves a combinatorial test for $k\ge3$ open (L602).
 - **D4 — Identifiers.** Internal indices 0-based; external labels via an explicit bijection built in translation; default labels `range(n)`.
 - **D5 — Numerics.** $k=2$ pipeline computes with `fractions.Fraction` (all ratio bounds are rational, so every strict inequality is exact); conversion to `float` only at the public boundary. Given-thresholds mode inherits the user's numeric type.
 - **D6 — FW fix (from F1).** Bound generation sweeps all ordered pairs; the reversal update of tex L546 is dropped. Init already covers both directions.
@@ -30,10 +31,11 @@ Consolidated report, kept current each round. Four buckets: **I know / Decided /
 - **D8 — Boundary conventions.** R2 (loop init $\beta^+(i,i)=\chi_k$), R6 ($ub_v=+\infty \Rightarrow \Pi(v)=lb_v+d_1$), R7 ($a_2=0$ cycle branch), R8 (ratio window intersected with $(0,1)$, $d_1=1$). All recorded in `docs/pseudocode.md`.
 - **D9 — Naming.** Package `robinson_unif_emb`; public surface exactly `uniform_embedding` + `EmbeddingResult`; private modules and paper-flavored internal names (`pi`, `d`, `beta_plus`, `preceq`, `T`), mapping table in `SPEC.md` §6.
 - **D10 — Version control.** Repo initialized and this round committed (per AGENTS.md "commit per round"); no push. `.gitignore` added for `.DS_Store`/`__pycache__`. `sources/` committed unmodified (see T3).
+- **D11 — LP backend layering (round 2).** New optional module `_lp.py` holds the SciPy import (lazy) and `search_thresholds`; `_core.py` stays pure stdlib for every $k$ and gains `cycle_bounds`. The general-$k$ automatic path is wired in the public function (core → `_lp` → core), not inside core. LP formulation: homogeneous max-slack with $d_1=1$ (R11); strict-feasible iff optimum $t^*>0$.
 
 ## To-decide (defaults stated; skipping is safe)
 
-- **T1 — Given-thresholds mode in v1?** Default: yes (P8; thin wrapper over the same core, no LP). Alternative: $k=2$ only.
+- **T1 — RESOLVED (round 2, author's choice).** v1 includes the automatic general-$k$ threshold search via the cycle-system LP with a SciPy backend; $k=2$ stays the dependency-free fast path. See D3, D11.
 - **T2 — Exact-output option?** Default: floats only in v1; an `exact=True` flag returning `Fraction`s can be added later if floating-point collapse of strict gaps ever matters in practice.
 - **T3 — Track `sources/` in git?** Default: yes (your own arXiv source; nothing is pushed without your say-so). Alternative: keep it untracked/local.
 - **T4 — Richer failure payload?** Default: witness cycles only (as the paper returns $C_1,C_2$). Alternative: also expose the two critical ratio values / bound vectors.

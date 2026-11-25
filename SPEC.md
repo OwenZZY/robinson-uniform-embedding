@@ -2,7 +2,12 @@
 
 Implementation spec for the algorithm of Janssen–Zhang, *Uniform Embeddings for Robinson Similarity Matrices* (arXiv:2105.09197v1). Supersedes `spec0-by-hand.md`. This document is the hand-off to the implementation chat: it fixes the layers, the interface, the names, and the data representations. The mathematics lives in `docs/definitions.md` (terms) and `docs/pseudocode.md` (transcription P1–P8 with resolved conventions R1–R10); read those first. Known source issues and the adopted fixes are in `REPORT.md` (findings F1–F10).
 
-**Scope of v1.** The complete $k=2$ combinatorial algorithm (paper §5.3.1): return a uniform embedding or witness cycles proving none exists. Plus the general-$k$ construction from *supplied* thresholds (paper §4.2 + cycle-system check). No LP search for $k>2$, no proofs, no complexity analysis, no tests/README/examples unless offered and accepted.
+**Scope of v1.** Complete for all of $\mathcal S^n[k]$, any $k$:
+- $k=2$, no thresholds → the paper's combinatorial algorithm (§5.3.1); **no dependencies**.
+- any $k$, thresholds supplied → cycle-system check + construction (§4.2); **no dependencies**.
+- $k\ne2$, no thresholds → automatic threshold search by LP feasibility over the cycle system (§5 opening, L435), using **SciPy as an optional dependency**; infeasibility returns witness cycles (the Farkas "bottleneck", L558).
+
+The problem is general $k$; only the *combinatorial threshold search* is $k=2$-specific (the ratio collapse of §5.3). For $k>2$ the paper itself routes feasibility through LP and leaves a combinatorial test for $k\ge3$ open (Conclusion, L602). No proofs, no complexity analysis, no tests/README/examples unless offered and accepted.
 
 ## 1. Layers
 
@@ -15,11 +20,16 @@ translation  ──  robinson_unif_emb/_translate.py
    │  explicit bijection labels ↔ 0..n-1, float/Fraction conversion
    ▼
 core  ──  robinson_unif_emb/_core.py
-      paper algorithms only; trusts its input; pure Python stdlib;
-      zero try/except/raise; no validation; paper notation in comments
+   │  paper algorithms only; trusts its input; pure Python stdlib;
+   │  zero try/except/raise; no validation; paper notation in comments
+   ▼
+LP backend  ──  robinson_unif_emb/_lp.py   (optional, only for k≠2 auto search)
+      lazy import of scipy.optimize.linprog; consumes cycle inequalities
+      produced by core; may raise ImportError if SciPy is absent
 ```
 
-- **Core** (`_core.py`): assumes a perfectly suitable input (a Robinson matrix in the internal representation, a feasible threshold vector when one is required). Correctness is the paper's; the code is a straight transcription of `docs/pseudocode.md`. No defensive checks, no exceptions, no external formats, no labels.
+- **Core** (`_core.py`): assumes a perfectly suitable input (a Robinson matrix in the internal representation, a feasible threshold vector when one is required). Correctness is the paper's; the code is a straight transcription of `docs/pseudocode.md`. No defensive checks, no exceptions, no external formats, no labels, **no third-party imports** — stays pure stdlib for every $k$.
+- **LP backend** (`_lp.py`): the only module that imports SciPy, lazily inside the search function so the package imports cleanly without it. Turns the core's cycle inequalities into an LP, returns a feasible $\mathbf d$ or Farkas witness cycles. Used only in mode 3 below.
 - **Translation** (`_translate.py`): the *only* layer touching external formats. Converts input to the internal representation, runs boolean validation predicates and halts on the first failure (`ValueError` with a plain message), builds the label bijection, and maps results back to external identifiers.
 - **Outer**: the user's notebook. Nothing to build beyond a friendly signature and a readable result object.
 - **Intermediate layer**: not needed. There is no graph-object input; matrices and vectors translate directly. (If a NetworkX front end is ever wanted, it belongs in a separate adapter, not in core.)
@@ -39,13 +49,13 @@ def uniform_embedding(A, labels=None, thresholds=None) -> EmbeddingResult: ...
 |---|---|---|
 | `A` | square nested sequence or numpy array of ints | Robinson similarity matrix, entries $\{0,\dots,k\}$, diagonal all $k$ (the maximum). $n=$ size, $k=A[0][0]$. |
 | `labels` | sequence of $n$ unique hashables, optional | External identifiers for the items, in matrix order. Default: `tuple(range(n))`. The bijection is `labels[i] ↔ i`. |
-| `thresholds` | sequence of $k$ numbers, optional | A candidate $\mathbf d\in\mathbb D^k$ ($d_1>\dots>d_k>0$). If given (any $k$): test it against the cycle system and, if feasible, construct the embedding for it (pseudocode P8). If omitted: $k$ must be $2$ and the combinatorial pipeline finds $\mathbf d$ itself (P7). |
+| `thresholds` | sequence of $k$ numbers, optional | A candidate $\mathbf d\in\mathbb D^k$ ($d_1>\dots>d_k>0$). If given (any $k$): test it against the cycle system and, if feasible, construct the embedding for it (P8). If omitted: $k=2$ uses the combinatorial pipeline (P7); $k\ne2$ uses the LP search (P9–P11, SciPy). |
 
 **Modes**
 
-1. `k == 2`, `thresholds is None` → full decision algorithm; finds thresholds or proves infeasibility.
-2. `thresholds` given (any `k >= 1`) → feasibility check of that vector + construction. Exact if the supplied numbers are `Fraction`s.
-3. `k > 2`, `thresholds is None` → `ValueError` (LP search for $k>2$ is out of scope for v1).
+1. `k == 2`, `thresholds is None` → full combinatorial decision algorithm; finds thresholds or proves infeasibility (P7). No SciPy.
+2. `thresholds` given (any `k >= 1`) → feasibility check of that vector + construction (P8). No SciPy. Exact if the supplied numbers are `Fraction`s.
+3. `k != 2`, `thresholds is None` → general threshold search: generate cycle inequalities, solve the LP, construct (P9–P11). Requires SciPy; if absent, `ImportError` with an install hint (raised in `_lp.py`, not in core). $k=1$ is trivially feasible for Robinson input but is handled uniformly through this path.
 
 **Return value** — one frozen dataclass, always returned (infeasibility is a mathematical outcome, not an error):
 
@@ -63,7 +73,7 @@ class EmbeddingResult:
 - Failure: `feasible=False`, `positions=thresholds=None`, `cycles` holds the witness cycle(s) $C_1,C_2$ (paper step 3). A single cycle is returned when one cycle alone is contradictory (e.g. bound $(0,0)$, or $a_2=0,a_1\le0$).
 - Thresholds are scale-free; the $k=2$ pipeline normalizes $d_1=1$ (convention R8).
 
-**Errors** — `ValueError` from the translation layer only, on the first failed predicate (§5). The core never raises.
+**Errors** — `ValueError` from the translation layer on the first failed predicate (§5); `ImportError` from `_lp.py` if mode 3 is requested without SciPy installed. The core never raises. Infeasibility is always a returned result, never an exception.
 
 **Usage sketch** (interface illustration, not implementation):
 
@@ -84,10 +94,25 @@ All functions below are project-internal (private module; not exported). They op
 | `walk_bound(a, k, w)` | eqn:beta(W) L233 | UBW tuple → bound tuple (sum of step bounds) |
 | `preceq(x, y)` | def:boundleq L465–470 | two bound tuples → bool (prefix-sum order) |
 | `bound_generation(a)` | alg:FW-mod L508–553, variant R5 | matrix → table `T` of minimal upper-bound walks, all ordered pairs |
+| `cycle_bounds(T)` | step 1 L578; duplicates L588 | table → list of `(bound, witness_walk)` for the distinct minimal cycle bounds (read from diagonal cells, deduplicated) |
 | `ratio_bounds(T)` | §5.3 L565–569, R7/R8 | table ($k=2$) → `(FEASIBLE, (lo, hi))` or `(INFEASIBLE, (w1, w2))`, rational window + witness walks |
 | `embedding_from_bounds(a, d, T)` | alg:embedding algorithm L343–353, R6 | matrix, feasible `d`, table → `pi` (list of positions) |
 | `solve_k2(a)` | §5.3.1 L574–583 | matrix → `(d, pi)` or `(NO_SOLUTION, (w1, w2))` |
 | `solve_with_thresholds(a, d)` | cycle system L450–453 + construction | matrix, `d` → same shape |
+
+The general-$k$ automatic path (`k != 2`, no thresholds) is wired in the public function: `bound_generation` → `cycle_bounds` → `_lp.search_thresholds` → `embedding_from_bounds`. It is not a core function because it depends on the LP backend.
+
+### 3.1 LP backend (`_lp.py`, optional)
+
+```python
+def search_thresholds(cycles, k):     # cycles: list[(bound, walk)] from cycle_bounds
+    # → (d, None) with d a feasible threshold tuple (d_1 = 1), or
+    #   (None, witnesses) with ≤ k witness walks on infeasibility
+```
+
+Formulation (homogeneous max-slack, R11): variables $(d_1,\dots,d_k,t)$; maximize $t$ subject to
+$\mathbf b^\top\mathbf d \ge t$ for each minimal cycle bound $\mathbf b$; $d_i-d_{i+1}\ge t$ ($i<k$); $d_k\ge t$; $d_1=1$.
+The strict cycle system is feasible iff the optimum $t^*>0$; then $\mathbf d$ is feasible. If $t^*\le0$ (or the LP is infeasible), recover a witness subset of $\le k$ cycles from the Farkas certificate / dual multipliers (paper L558); if the backend does not expose a certificate, fall back to the cycle constraints active at the optimum. SciPy (`scipy.optimize.linprog`, HiGHS) is imported lazily inside this function; absent SciPy → `ImportError("install scipy for k>2 automatic search: pip install scipy")`.
 
 Implementation notes carried over from the pseudocode (do not re-litigate):
 
@@ -127,8 +152,9 @@ Boolean predicates, evaluated in order; first `False` → `ValueError("<predicat
 4. diagonal constant and equal to the maximum entry $k$;
 5. Robinson: for all $u<v<w$, $a_{u,v}\ge a_{u,w}$ and $a_{v,w}\ge a_{u,w}$;
 6. `labels`: length $n$, hashable, unique (if given);
-7. `thresholds` (if given): length $k$, strictly decreasing, positive, real numbers;
-8. mode check: `k > 2` requires `thresholds`.
+7. `thresholds` (if given): length $k$, strictly decreasing, positive, real numbers.
+
+Any $k\ge1$ is accepted; mode selection (§2) needs no input predicate. SciPy availability for mode 3 is checked in `_lp.py` (raises `ImportError`), not here.
 
 Bijection: translation builds `index_of = {label: i}` and keeps `labels` for the inverse. Core receives indices only; `positions` and witness `cycles` are mapped back through `labels` before return. Input conversion: numpy → `tolist()` (duck-typed), nested sequences → tuple of tuples of `int`. Output conversion: `Fraction` → `float` (default; see to-decide T2 in `REPORT.md`).
 
@@ -151,6 +177,7 @@ Bijection: translation builds `index_of = {label: i}` and keeps `labels` for the
 | FW-var / Bound-Generation | `bound_generation` |
 | $d_2/d_1$ window | `ratio_bounds` → `(lo, hi)` |
 | $C_1, C_2$ | `cycles` (public), `(w1, w2)` (core) |
+| cycle-system inequalities (§5) | `cycle_bounds` (core) → `search_thresholds` (`_lp.py`) |
 | $\mathcal S^n[k]$ | no runtime object; the validation predicates define it |
 
 ## 7. Implementation roadmap (for the next chat)
@@ -160,9 +187,10 @@ Bijection: translation builds `index_of = {label: i}` and keeps `labels` for the
 3. `ratio_bounds` + `solve_k2` (P5, P7; R7, R8, R10). Fixtures: Example 1A → feasible; Example 1B → infeasible with witness `⟨0,1,5,3,0⟩` (0-based) or an equivalent cycle.
 4. `embedding_from_bounds` (P6, R6). Verify the returned `pi` against the strict inequalities for every pair on the fixtures.
 5. `_translate.py` predicates + bijection + conversions; `__init__.py` exporting the single function and result type (§2, §5).
-6. `solve_with_thresholds` (P8) wired to the `thresholds` parameter.
-7. Offer (do not build unasked): a small test suite with the two fixtures, a README, a plotting helper.
+6. `solve_with_thresholds` (P8) wired to the `thresholds` parameter (any $k$, no SciPy).
+7. `cycle_bounds` (P9) + `_lp.py` `search_thresholds` (P10, R11–R12) + general orchestration (P11). Verify on a $k=3$ fixture: feasible case returns $\mathbf d,\Pi$; infeasible case returns witness cycles. Confirm the package imports and modes 1–2 run with SciPy absent.
+8. Offer (do not build unasked): a small test suite with the fixtures, a README, a plotting helper.
 
 ## 8. Out of scope for v1
 
-LP search of a feasible $\mathbf d$ for $k>2$ (paper §5, Vaidya discussion); seriation (recovering the order from an unordered matrix); graphon inputs; NetworkX adapters; performance engineering beyond the paper's chain-slot trick; proofs and complexity analysis in code comments.
+Seriation (recovering the order from an unordered matrix); graphon inputs; NetworkX adapters; a pure-Python LP fallback (SciPy is the chosen backend); performance engineering beyond the paper's chain-slot trick; proofs and complexity analysis in code comments. A combinatorial feasibility test for $k\ge3$ is an open problem of the paper (L602), not an implementation target.
