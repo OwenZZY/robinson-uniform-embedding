@@ -1,0 +1,38 @@
+\pdfoutput=1
+
+%======================================================================
+% Use fonts in the Times family.
+
+% General styles
+% \usepackage{latexsym}	% LaTeX fonts
+\usepackage{amssymb}  	% for \feedback symbol; superset of amsfonts
+% \usepackage{amsmath}  	% \text{} etc
+% \usepackage{amsthm}   	% AMS style theorem and proof environments
+\usepackage{mathrsfs}	% special script style \mathscr{S} for \Set
+\usepackage[all]{xy}	% Xy-Pic
+% ----------------------------------------------------------------------
+
+% To produce straighter arrows, uncomment the following two lines:
+
+%\xyoption{ps}		% backend
+%\xyoption{dvips}	% To have prettier straight lines etc.
+
+
+% \usepackage{geometry}
+\usepackage{graphicx}
+
+\usepackage[ruled,vlined,linesnumbered]{algorithm2e}%vlined
+\usepackage{empheq}
+\usepackage{blkarray,bigstrut}
+\usepackage{tikz}
+\usepackage{algpseudocode}
+
+% \usepackage{hyperref}
+\usepackage{cleveref}
+\crefname{algocf}{alg.}{algs.}
+\Crefname{algocf}{Algorithm}{Algorithms}
+
+\newcommand{\doublespaced}{\renewcommand{\baselinestretch}{2}\normalsize}
+\newcommand{\singlespaced}{\renewcommand{\baselinestretch}{1}\normalsize}
+\newcommand{\draftspaced}{\renewcommand{\baselinestretch}{1}\normalsize}  
+		% for 10pt draft only

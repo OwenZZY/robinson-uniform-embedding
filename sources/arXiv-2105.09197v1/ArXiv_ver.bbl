@@ -1,0 +1,68 @@
+\begin{thebibliography}{10}
+\providecommand{\url}[1]{\texttt{#1}}
+\providecommand{\urlprefix}{URL }
+\providecommand{\doi}[1]{https://doi.org/#1}
+
+\bibitem{atkins1998spectral}
+Atkins, J.E., Boman, E.G., Hendrickson, B.: A spectral algorithm for seriation
+  and the consecutive ones problem. SIAM Journal on Computing  \textbf{28}(1),
+  297--310 (1998)
+
+\bibitem{bogart1998short}
+Bogart, K.P., West, D.B.: A short proof that `proper = unit'. Discrete
+  Mathematics  \textbf{201}(1),  21--23 (1999)
+
+\bibitem{chuangpishit2017uniform}
+Chuangpishit, H., Ghandehari, M., Janssen, J.: Uniform linear embeddings of
+  graphons. European Journal of Combinatorics  \textbf{61},  47--68 (2017)
+
+\bibitem{corneil20043-sweep}
+Corneil, D.G.: A simple 3-sweep {LBF} algorithm for the recognition of unit
+  interval graphs. Discrete Applied Mathematics  \textbf{138}(3),  371--379
+  (2004)
+
+\bibitem{corneil1995simple}
+Corneil, D.G., Kim, H., Natarajan, S., Olariu, S., Sprague, A.P.: Simple linear
+  time recognition of unit interval graphs. Information processing letters
+  \textbf{55}(2),  99--104 (1995)
+
+\bibitem{fw1962fwalg}
+Floyd, R.W.: Algorithm 97: Shortest path. Commun. ACM  \textbf{5}(6), ~345 (Jun
+  1962)
+
+\bibitem{gardi07}
+Gardi, F.: The {R}oberts characterization of proper and unit interval graphs.
+  Discrete Mathematics  \textbf{307}(22),  2906 -- 2908 (2007)
+
+\bibitem{kendall1969incidence}
+Kendall, D.: Incidence matrices, interval graphs and seriation in archeology.
+  Pacific Journal of mathematics  \textbf{28}(3),  565--570 (1969)
+
+\bibitem{laurent2017lex}
+Laurent, M., Seminaroti, M.: A {Lex-BF}-based recognition algorithm for
+  {R}obinsonian matrices. Discrete Applied Mathematics  \textbf{222},  151 --
+  165 (2017)
+
+\bibitem{laurent2017similarity}
+Laurent, M., Seminaroti, M.: Similarity-{F}irst {S}earch: a new algorithm with
+  application to {R}obinsonian matrix recognition. SIAM Journal on Discrete
+  Mathematics  \textbf{31}(3),  1765--1800 (2017)
+
+\bibitem{liiv2010seriation}
+Liiv, I.: Seriation and matrix reordering methods: An historical overview.
+  Statistical Analysis and Data Mining: The ASA Data Science Journal
+  \textbf{3}(2),  70--91 (2010)
+
+\bibitem{roberts1969indifference}
+Roberts, F.S.: Indifference graphs, pp. 139--146. Academic Press (1969)
+
+\bibitem{robinson}
+Robinson, W.S.: A method for chronologically ordering archaeological deposits.
+  American Antiquity  \textbf{16}(4),  293--301 (1951)
+
+\bibitem{Vaidya89}
+{Vaidya}, P.M.: Speeding-up linear programming using fast matrix
+  multiplication. In: 30th Annual Symposium on Foundations of Computer Science.
+  pp. 332--337 (1989)
+
+\end{thebibliography}

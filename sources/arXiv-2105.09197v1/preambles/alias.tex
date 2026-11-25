@@ -1,0 +1,242 @@
+% ----------------------------------------------------------------------
+% common text abbreviations
+\newcommand{\eg}{\mbox{\it e.g.}}
+\newcommand{\ie}{\mbox{\it i.e.}}
+\newcommand{\etal}{\mbox{\it et al.}}
+\newcommand{\apriori}{{\it a priori}}
+\newcommand{\aposteriori}{{\it a posteriori}}
+\newcommand{\wloss}{without loss of generality}
+\newcommand{\Wloss}{Without loss of generality}
+
+% ----------------------------------------------------------------------
+% common symbols
+
+% implication
+\newcommand{\imp}{\Rightarrow}                  % implication (math mode)
+\newcommand{\iimp}{\Longrightarrow}             % long implication (math mode)
+\renewcommand{\implies}{$\imp\ $}		% '=>' (outside math mode)
+\newcommand{\pmi}{\Leftarrow}			% <= (opposite of \imp) 
+
+% spacing
+\newcommand{\sep}{\hspace{2em}} 
+\newcommand{\ssep}{\hspace{1em}}
+\newcommand{\void}[1]{}				% comment out the argument
+\newcommand{\todo}[1]{{\color{blue}[#1]\marginpar{\mbox{\Huge !}}}}
+
+%Here are some user-defined notations
+
+\newcommand{\RR}{\mathbf R}
+\newcommand{\CC}{\mathbf C}
+\newcommand{\ZZ}{\mathbf Z}
+\newcommand{\ZZn}[1]{\ZZ/{#1}\ZZ}
+\newcommand{\QQ}{\mathbf Q}
+\newcommand{\rr}{\mathbb R}
+\newcommand{\cc}{\mathbb C}
+\newcommand{\zz}{\mathbb Z}
+\newcommand{\zzn}[1]{\zz/{#1}\zz}
+\newcommand{\qq}{\mathbb Q}
+\newcommand{\nn}{\mathbb N}
+\newcommand{\calM}{\mathcal M}
+\newcommand{\dd}{{\rm d}}
+\newcommand{\sm}{\setminus} 
+\newcommand{\set}[1]{\mathcal{#1}}
+\newcommand{\Lap}[1]{\mathcal{L}}
+
+\newcommand{\thisway}{$(\Longrightarrow)$}
+\newcommand{\thatway}{$(\Longleftarrow)$}
+
+
+\newcommand{\Prob}{\operatorname {Prob}}
+
+
+% ----------------------------------------------------------------------
+% theorem definitions
+% numbered by default: 
+% 	theorem, lemma, proposition, corollary, example, principle
+% unnumbered by default: 
+%	definition, openproblem, remark, remarks, convention
+%
+% get unnumbered versions by un-lemma etc., numbered by n-definition etc. 
+
+% \theoremstyle{plain}
+% \newtheorem{n-lemma}{Lemma}[chapter]
+% \newtheorem{n-theorem}[n-lemma]{Theorem}
+% \newtheorem{n-proposition}[n-lemma]{Proposition}
+% \newtheorem{n-corollary}[n-lemma]{Corollary} 
+% \newtheorem{n-principle}[n-lemma]{Principle}
+% \newtheorem{n-claim}[n-lemma]{Claim}
+
+% \newtheorem*{un-lemma}{Lemma}
+% \newtheorem*{un-theorem}{Theorem}
+% \newtheorem*{un-proposition}{Proposition}
+% \newtheorem*{un-corollary}{Corollary} 
+% \newtheorem*{un-principle}{Principle}
+% \newtheorem*{un-claim}{Claim}
+
+% \theoremstyle{definition}
+% \newtheorem{n-definition}[n-lemma]{Definition}
+% \newtheorem{n-openproblem}[n-lemma]{Open Problem}
+% \newtheorem{bn-remark}[n-lemma]{Remark}		% bold remark
+% \newtheorem*{un-definition}{Definition}
+% \newtheorem*{un-openproblem}{Open Problem}
+% \newtheorem*{bun-remark}{Remark}		% bold unnumbered remark
+% \newtheorem*{un-problem}{Problem}
+% \newtheorem{n-problem}[n-lemma]{Problem}
+
+
+% \theoremstyle{remark}
+% \newtheorem{n-example}[n-lemma]{Example}
+% \newtheorem{n-remark}[n-lemma]{Remark}
+% \newtheorem{n-remarks}[n-lemma]{Remarks}
+% \newtheorem{n-convention}[n-lemma]{Convention}
+% \newtheorem*{un-example}{Example}
+% \newtheorem*{un-remark}{Remark}
+% \newtheorem*{un-remarks}{Remarks}
+% \newtheorem*{un-convention}{Convention}
+
+% % defaults numbered/unnumbered
+% \newenvironment{theorem}{\begin{n-theorem}}{\end{n-theorem}}
+% \newenvironment{lemma}{\begin{n-lemma}}{\end{n-lemma}}
+% \newenvironment{proposition}{\begin{n-proposition}}{\end{n-proposition}}
+% \newenvironment{corollary}{\begin{n-corollary}}{\end{n-corollary}}
+% \newenvironment{definition}{\begin{n-definition}}{\end{n-definition}}
+% \newenvironment{example}{\begin{n-example}}{\end{n-example}}
+% \newenvironment{openproblem}{\begin{un-openproblem}}{\end{un-openproblem}}
+% \newenvironment{principle}{\begin{n-principle}}{\end{n-principle}}
+% \newenvironment{remark}{\begin{n-remark}}{\end{n-remark}}
+% \newenvironment{remarks}{\begin{un-remarks}}{\end{un-remarks}}
+% \newenvironment{convention}{\begin{un-convention}}{\end{un-convention}}
+% \newenvironment{claim}{\begin{un-claim}}{\end{un-claim}}
+% \newenvironment{problem}{\begin{n-problem}}
+% {\end{n-problem}}
+% % proofs
+\renewenvironment{proof}
+{\noindent{\it Proof:}\hspace{.5em}\rm}
+{\hfill$\square$
+
+\vspace{0.1em}}
+
+\newtheorem{assumption}{Assumption}
+
+\newenvironment{proofof}[1]			% loose proofs
+	{\begin{trivlist}\item[]{\it Proof of #1:\hspace{.5em}}\rm}
+	{\hfill$\square$
+	\end{trivlist}}
+	%{\hfill\qedsymbol
+	%\end{trivlist}}
+\newenvironment{proofsketch}			% proof sketch
+	{\begin{trivlist}\item[]{\it Proof sketch:\hspace{.5em}}\rm}
+	{\hfill$\square$
+	\end{trivlist}}
+
+% \renewcommand{\qed}{} 		% turn off automatic AMS-style \qed'ing.
+% \newcommand{\eotsymbol}{{\large $\Box$}} 	% can be redefined
+% \newcommand{\eot}{{\hspace*{\fill}\eotsymbol}}
+% \newcommand{\eottwo}{\vspace{-5ex}\par\eot}	% \eot after math display
+
+% ----------------------------------------------------------------------
+% case distinctions: label is flush left. 
+% caselist causes no indentation. May use \case for automatic numbering
+% itemlist causes indentation. 
+% nienumerate is like enumerate but flush left
+
+% \newcounter{casecounter}
+% \newlength{\normalparindent}
+% \setlength{\normalparindent}{\parindent}
+% \newenvironment{caselist}
+% 	{\begin{list}{{\bf Case \arabic{casecounter}:}}
+% 	 {\usecounter{casecounter}
+% 		\setlength{\leftmargin}{0ex}
+% 		\setlength{\labelwidth}{0ex} 		 
+% 		\setlength{\labelsep}{2ex}
+% 		\setlength{\itemindent}{\labelsep}	
+% 		\setlength{\parsep}{0ex}
+% 		\setlength{\listparindent}{\normalparindent}
+% 	}}	
+% 	{\end{list}}
+% \newcommand{\case}{\item}
+% \newcommand{\caseimp}{\case[$\imp$:]}
+% \newcommand{\casepmi}{\case[$\pmi$:]}
+% \newcommand{\impl}[2]{$\text{#1}\imp\text{#2}$}
+% \newcommand{\caseimpl}[2]{\case[\impl{#1}{#2}:]}
+% \newenvironment{itemlist}{\begin{list}{\undefinedcase}
+%  	{	\setlength{\leftmargin}{2.5ex}
+% 		\setlength{\labelwidth}{1.5ex}
+%  		\setlength{\labelsep}{1ex}
+% 		\setlength{\itemindent}{0ex}}}
+%  	{\end{list}}
+
+% \newcounter{nicounter}
+% \newenvironment{nienumerate} % enumerate but no indentation
+% 	{\begin{list}{\arabic{nicounter}.}
+% {\usecounter{nicounter} 		 \setlength{\leftmargin}{0ex}
+% \setlength{\labelwidth}{0ex} 		 \setlength{\labelsep}{1ex}
+% \setlength{\itemindent}{\labelsep} 	}	} 	{\end{list}}
+
+
+%This numbers equations by section
+\numberwithin{equation}{section}
+
+
+\newcommand{\assign}{\leftarrow}
+\newcommand{\True}{\operatorname{\mathbf{True}}}
+\newcommand{\False}{\operatorname{\mathbf{False}}}
+
+\newcommand{\U}{{\mathcal{U}}}
+\renewcommand{\L}{{\mathcal{L}}}
+\newcommand{\upperbd}[2]{\beta^+(\U_{#1, #2})}
+\newcommand{\lowerbd}[2]{\beta^-(\L_{#1, #2})}
+% \newcommand{\upperbdwalk}[2]{\mathfrak{UW}_{#1,#2}}
+% \newcommand{\lowerbdwalk}[2]{\mathfrak{LW}_{#1,#2}}
+% \newcommand{\upperbdwalks}{\upperbdwalk}
+% \newcommand{\lowerbdwalks}{\lowerbdwalk}
+\newcommand{\upperbdpath}[2]{\mathcal{U}_{#1,#2}}
+\newcommand{\lowerbdpath}[2]{\mathcal{L}_{#1,#2}}
+\newcommand{\upperbdpaths}{\upperbdpath}
+\newcommand{\lowerbdpaths}{\lowerbdpath}
+% \newcommand{\mupperbdpath}[2]{\mathfrak{MUP}_{#1,#2}}
+% \newcommand{\mlowerbdpath}[2]{\mathfrak{MLP}_{#1,#2}}
+% \newcommand{\mupperbdpaths}{\mupperbdpath}
+% \newcommand{\mlowerbdpaths}{\mlowerbdpath}
+
+\newcommand{\robinson}[1]{\mathscr{#1}}
+\newcommand{\bm}{\boldsymbol}
+\newcommand{\minimal}{\operatorname{minimal}}
+\newcommand{\maximal}{\operatorname{maximal}}
+\newcommand{\dist}[2]{\Pi(#2)-\Pi(#1)}%{\operatorname{dist}}
+\newcommand{\nedge}[0]{null-edge}
+\newcommand{\embedding}{uniform embedding}
+
+\newcommand{\away}[0]{away-edge}
+\newcommand{\within}[0]{within-edge}
+
+% \renewcommand{\leq}{\leqslant}		
+% \renewcommand{\geq}{\geqslant}	
+% \renewcommand{\preceq}{\preccurlyeq}
+% \renewcommand{\succeq}{\succcurlyeq}
+
+\newcommand{\diagincmat}{Robinson matrix}
+
+\newcommand{\path}[1]{\langle#1\rangle}	
+\newcommand{\bma}{\bm a}
+\newcommand{\bmb}{\bm b}
+\newcommand{\bmc}{\bm c}
+\newcommand{\bmd}{\bm d}
+\newcommand{\bmx}{\bm x}
+\newcommand{\bmy}{\bm y}
+\newcommand{\bmw}{\bm w}
+
+
+\newcommand{\calP}{\mathcal P}
+\newcommand{\calS}{\mathcal S}
+\newcommand{\calH}{\mathcal H}
+
+\newcommand{\st}{\operatorname{s.t.\ }}
+
+\newcommand{\upperbounds}{\operatorname{UpperBounds}}
+\newcommand{\lowerbounds}{\operatorname{LowerBounds}}
+
+\newcommand{\edge}[2]{\{#1, #2\}}
+\newcommand{\reverse}[1]{#1^{\leftarrow}}
+\newcommand{\rev}{^{\leftarrow}}
+\newcommand{\bmD}{\mathbb D^k}
