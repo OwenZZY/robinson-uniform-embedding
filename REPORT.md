@@ -1,4 +1,4 @@
-# REPORT — rounds 1–8 (documentation, design, spec review)
+# REPORT — rounds 1–9 (documentation, design, spec review, implementation)
 
 Consolidated report, kept current each round. Four buckets: **I know / Decided / To-decide / Findings**.
 
@@ -7,10 +7,11 @@ Consolidated report, kept current each round. Four buckets: **I know / Decided /
 1. `HANDOFF.md` — **what changed in round 8 and what to notice**; feed this together with the two spec files to the coding agent. It lists the fixes, the acceptance fixtures and the known limitation.
 2. `SPEC.md` — the **standalone core spec**: minimal definitions, data types, and numbered pseudocode (L1, L2… per function, already 0-based). Implementable without the paper; prose refers to internal line numbers.
 3. `SPEC-engineering.md` — the **software** (also paper-free): layers, public interface, translation/validation, LP-backend mechanics, numerics, naming, packaging, errors, roadmap, fixtures.
-4. `REVIEW-spec.md` — **round-7 review** (history): the 8 blocking findings and 8 small fixes that round 8 addressed, with the evidence. No longer a to-do list.
-5. This report's **Findings** — F1 is a substantive gap in the published FW-var pseudocode; F11–F13 are the round-8 spec findings.
-6. `docs/definitions.md` — glossary with source provenance (reference).
-7. `docs/overview.md` — the paper map (reference).
+4. `robinson_unif_emb/` — the **v1 implementation** (round 9): `_core.py` (algorithm, L#-commented), `_lp.py` (optional SciPy search), `_translate.py` (validation/bijection), `__init__.py` (public function + result). `pyproject.toml` at the repo root; optional extra `lp`.
+5. `REVIEW-spec.md` — **round-7 review** (history): the 8 blocking findings and 8 small fixes that round 8 addressed, with the evidence. No longer a to-do list.
+6. This report's **Findings** — F1 is a substantive gap in the published FW-var pseudocode; F11–F13 are the round-8 spec findings.
+7. `docs/definitions.md` — glossary with source provenance (reference).
+8. `docs/overview.md` — the paper map (reference).
 
 ## I know
 
@@ -22,6 +23,7 @@ Consolidated report, kept current each round. Four buckets: **I know / Decided /
 - Round 2 scope clarification (with the author): the problem is general $\mathcal S^n[k]$; the core (bound generation + construction) is $k$-generic and was never dropped. Only the combinatorial *threshold search* is $k=2$-specific; $k>2$ feasibility is an LP per the paper (L435), with combinatorial $k\ge3$ left open (L602). v1 now implements the full general-$k$ pipeline (D3, D11).
 - Round 7 (review, no spec edits): both fixtures re-derived independently; `k=2` ratio logic and construction verified exactly on 600 random Robinson matrices against exhaustive simple-cycle enumeration; `SPEC.md` §4 as written (all walks, all ordered pairs) explodes on Example 1B (stage 4: largest cell 419, max $|b|_1=1760$; stage 5 did not finish in 150 s) and, in the literal chain-slot reading, already hangs on Example 1A. Corpus of findings: `REVIEW-spec.md`.
 - Round 8 (patch, author's "go"): applied the review's defaults. The bound table now holds **simple** walks only (open paths; simple cycles on the diagonal; no diagonal seed; `simple_cycle` deleted); the $k=2$ ratio test has the two single-witness branches for bounds outside $(0,1)$; the $k>2$ witnesses are a verified deletion-filter set (jointly contradictory with $d\in\bm D^k$, no "$\le k$" claim); the $k>2$ dispatch is a callable injected by `__init__.py` (core imports no SciPy); the $k=1$ path is combinatorial; thresholds are converted to `Fraction`; every successful result is verified and a failure raises `RuntimeError`; the cell interface is `cell_items` everywhere. The patched pseudocode was re-implemented and re-tested before the edit: A/B pass, 600 random $k=2$ matrices match the exhaustive oracle, $k=1$ random binary Robinson matrices all verify, and $k=3$ completeness 120/120. New $k=3$ fixtures A₃/B₃ were verified (A₃ feasible with the same $\pi$, $d=(8,6,0.5)$; B₃ has the $(0,0,0)$ cycle).
+- Round 9 (implementation): the v1 package `robinson_unif_emb` is built exactly to the patched spec — `_core.py` (stdlib only, zero try/except/raise, comments against the L# lines), `_lp.py` (lazy SciPy import, max-slack LP with $d_1=1$ substituted, deletion filter), `_translate.py` (the seven ordered boolean predicates, exact `Fraction` conversion, label bijection), `__init__.py` (frozen `EmbeddingResult`, verify-every-success wiring, lazy `_lp` only for the $k>2$ search), `pyproject.toml` (extra `lp`). Acceptance (scratch scripts outside the repo, since removed): **A** feasible, verified, $\pi$ strictly increasing; **B** infeasible in 3 ms with the single $(0,0)$ cycle $(0,1,5,3,0)$; **A₃** feasible via the LP ($d=(1,0.5,0.25)$, verified exactly); **B₃** infeasible via the LP, the returned witness set re-solves infeasible (jointly contradictory with $d\in\bm D^3$); **K1** feasible with SciPy absent. $k=1$, $k=2$ and given-$d$ run with no third-party packages installed; the $k>2$ automatic search without SciPy raises the specified `ImportError`. Cross-checks: $k=2$ ratio window equals exhaustive simple-cycle enumeration on 200 random Robinson matrices (verdict and window exact, witnesses valid); $k=1$ 100/100 feasible and verified; random $k=3$: 34 feasible (all verified), 6 infeasible (witnesses re-solve infeasible), 0 verification failures. `sources/` and both spec files untouched.
 
 ## Decided
 
@@ -45,6 +47,7 @@ Consolidated report, kept current each round. Four buckets: **I know / Decided /
 - **D19 — Round 8: $k=1$ combinatorial (was T9).** `d=(1,)`, no SciPy, §6 construction; every binary Robinson matrix is feasible.
 - **D20 — Round 8: exactness of given thresholds.** Translation converts supplied thresholds to `Fraction` (floats by exact binary conversion); $k=1$, $k=2$ and given-$d$ run exactly; only the LP path is float (and verified).
 - **D21 — Round 8: cell interface and output contract.** `cell_items` is the only cell iteration; failure is `(None, witnesses)`; witnesses are jointly contradictory except the $k=2$ individually-unsatisfiable cases; `NO_SOLUTION` is gone.
+- **D22 — Round 9: implementation choices within the spec's freedom.** (i) "Entries integral" (predicate 2) is read as integer-*typed*: `hasattr(x, "__index__")` — accepts `int` and numpy integer types without importing numpy, rejects floats such as `2.0` (the spec's parenthetical "numpy integer types accepted" anticipates a type check). (ii) `ratio_bounds` status tokens are the strings `"FEASIBLE"`/`"INFEASIBLE"`. (iii) The lazy SciPy import lives in one private helper `_lp._solve` shared by `search_thresholds` and `minimal_witnesses`; it still executes only at call time, never at module import. (iv) The wrapper verifies the returned numeric types directly (the §3 `_run` sketch); float comparison is exact and `Fraction` conversion is order-isomorphic, so §5's parenthetical gives the same verdict. (v) `requires-python = ">=3.10"` (the `dict | None` annotations).
 - **D14 — Standalone numbered spec (round 6, author feedback).** The spec must be implementable **without the paper**. `SPEC.md` is now self-contained: minimal inline definitions, data types, and **numbered pseudocode** (L1, L2… per function) already in 0-based indexing; prose refers to internal line numbers, never the paper. Index shifts are encoded in the code, not left to the reader. All paper citations removed from `SPEC.md` and `SPEC-engineering.md`; provenance stays in `docs/definitions.md`, `docs/overview.md`, and this report. `docs/pseudocode.md` folded into `SPEC.md` and removed. Structure (author's choice): standalone `SPEC.md` + paper-free `SPEC-engineering.md`; only the math needed to implement is inline (full glossary stays in `docs/definitions.md`).
 
 ## To-decide (defaults stated; skipping is safe)
@@ -60,6 +63,7 @@ Consolidated report, kept current each round. Four buckets: **I know / Decided /
 - **T9 — RESOLVED (round 8).** $k=1$ combinatorial; see D19.
 - **T10 — Completeness of the pruned $k>2$ table.** Default: out of scope for v1; the verification step catches a false feasible. If the author wants a proof or a complete enumeration, that is a separate research/engineering task.
 - **T11 — `exact=True` output.** Default: still deferred (T2); the given-$d$ and $k=2$ paths are already exact internally.
+- **T12 — $k=0$ (all-zero matrix).** The seven predicates as written accept it ($k=A_{0,0}=0$), but the spec's input domain is $k\ge1$ and no $k=0$ behavior is defined; it currently reaches `solve_general` with `search=None` and raises `TypeError`. Default: keep the seven predicates exactly as specified (no eighth predicate invented). If you want $k=0$ rejected cleanly, add "$k\ge1$" to predicate 2 — one line.
 
 ## Findings
 

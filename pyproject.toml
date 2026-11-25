@@ -1,0 +1,15 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "robinson-uniform-embedding"
+version = "0.1.0"
+description = "Uniform embeddings for Robinson similarity matrices"
+requires-python = ">=3.10"
+
+[project.optional-dependencies]
+lp = ["scipy"]
+
+[tool.setuptools]
+packages = ["robinson_unif_emb"]
