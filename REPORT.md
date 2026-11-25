@@ -7,11 +7,13 @@ Consolidated report, kept current each round. Four buckets: **I know / Decided /
 1. `HANDOFF.md` — **what changed in round 8 and what to notice**; feed this together with the two spec files to the coding agent. It lists the fixes, the acceptance fixtures and the known limitation.
 2. `SPEC.md` — the **standalone core spec**: minimal definitions, data types, and numbered pseudocode (L1, L2… per function, already 0-based). Implementable without the paper; prose refers to internal line numbers.
 3. `SPEC-engineering.md` — the **software** (also paper-free): layers, public interface, translation/validation, LP-backend mechanics, numerics, naming, packaging, errors, roadmap, fixtures.
-4. `robinson_unif_emb/` — the **v1 implementation** (round 9): `_core.py` (algorithm, L#-commented), `_lp.py` (optional SciPy search), `_translate.py` (validation/bijection), `__init__.py` (public function + result). `pyproject.toml` at the repo root; optional extra `lp`.
+4. `robinson_unif_emb/` — the **v1 implementation** (rounds 9–10, re-checked round 11): `_core.py` (algorithm, L#-commented), `_lp.py` (optional SciPy search), `_translate.py` (validation/bijection), `__init__.py` (public function + result). `pyproject.toml` at the repo root; optional extra `lp`. See **Status (round 11)** below.
 5. `REVIEW-spec.md` — **round-7 review** (history): the 8 blocking findings and 8 small fixes that round 8 addressed, with the evidence. No longer a to-do list.
 6. This report's **Findings** — F1 is a substantive gap in the published FW-var pseudocode; F11–F13 are the round-8 spec findings.
 7. `docs/definitions.md` — glossary with source provenance (reference).
 8. `docs/overview.md` — the paper map (reference).
+
+Historical note: decisions D3/D5/D8 and finding F5 predate rounds 8–9 and are superseded by D15/D17/D20 and F11; read them as history.
 
 ## I know
 
@@ -25,6 +27,23 @@ Consolidated report, kept current each round. Four buckets: **I know / Decided /
 - Round 8 (patch, author's "go"): applied the review's defaults. The bound table now holds **simple** walks only (open paths; simple cycles on the diagonal; no diagonal seed; `simple_cycle` deleted); the $k=2$ ratio test has the two single-witness branches for bounds outside $(0,1)$; the $k>2$ witnesses are a verified deletion-filter set (jointly contradictory with $d\in\bm D^k$, no "$\le k$" claim); the $k>2$ dispatch is a callable injected by `__init__.py` (core imports no SciPy); the $k=1$ path is combinatorial; thresholds are converted to `Fraction`; every successful result is verified and a failure raises `RuntimeError`; the cell interface is `cell_items` everywhere. The patched pseudocode was re-implemented and re-tested before the edit: A/B pass, 600 random $k=2$ matrices match the exhaustive oracle, $k=1$ random binary Robinson matrices all verify, and $k=3$ completeness 120/120. New $k=3$ fixtures A₃/B₃ were verified (A₃ feasible with the same $\pi$, $d=(8,6,0.5)$; B₃ has the $(0,0,0)$ cycle).
 - Round 9 (implementation): the v1 package `robinson_unif_emb` is built exactly to the patched spec — `_core.py` (stdlib only, zero try/except/raise, comments against the L# lines), `_lp.py` (lazy SciPy import, max-slack LP with $d_1=1$ substituted, deletion filter), `_translate.py` (the seven ordered boolean predicates, exact `Fraction` conversion, label bijection), `__init__.py` (frozen `EmbeddingResult`, verify-every-success wiring, lazy `_lp` only for the $k>2$ search), `pyproject.toml` (extra `lp`). Acceptance (scratch scripts outside the repo, since removed): **A** feasible, verified, $\pi$ strictly increasing; **B** infeasible in 3 ms with the single $(0,0)$ cycle $(0,1,5,3,0)$; **A₃** feasible via the LP ($d=(1,0.5,0.25)$, verified exactly); **B₃** infeasible via the LP, the returned witness set re-solves infeasible (jointly contradictory with $d\in\bm D^3$); **K1** feasible with SciPy absent. $k=1$, $k=2$ and given-$d$ run with no third-party packages installed; the $k>2$ automatic search without SciPy raises the specified `ImportError`. Cross-checks: $k=2$ ratio window equals exhaustive simple-cycle enumeration on 200 random Robinson matrices (verdict and window exact, witnesses valid); $k=1$ 100/100 feasible and verified; random $k=3$: 34 feasible (all verified), 6 infeasible (witnesses re-solve infeasible), 0 verification failures. `sources/` and both spec files untouched.
 - Round 10 (docstrings, author feedback): every function in the four modules now carries a self-contained input/output docstring — what the inputs are and why they are there, what is returned under what condition (including the `None`/witness cases and the raised errors) — instead of relying on the reader opening `SPEC.md`. The L# pseudocode comments stay. Logic provably unchanged (AST comparison with docstrings stripped, all four files); acceptance re-run unchanged under both Pythons.
+
+## Status (round 11, implementation review)
+
+Independently re-checked (scratch scripts outside the repo; no repo files added):
+- **Fixtures**: A feasible + verified; B infeasible in 2.4 ms with the single `(0,0)` cycle `(0,1,5,3,0)`; K1 feasible; A₃ feasible via the LP with `d=(1,0.5,0.25)` (first call 944 ms including the SciPy import, 2.2 ms after); B₃ infeasible via the LP with the `(0,0,0)` cycle; A₃/B₃ given-`d` also correct.
+- **Random cross-checks**: 200 random `k=2` matrices against the exhaustive simple-cycle oracle — verdict, window and every `π` exact (0 problems); 100 random `k=1` (0 problems); 30 random `k=3` automatic — 24 feasible verified, 6 infeasible with witness sets re-checked by an exact rational LP oracle as infeasible **and irreducible** (0 problems); 8 random `k=4` (0 problems); a `k=3` joint-witness case (2 cycles, jointly infeasible, irreducible).
+- **Modes and environments**: `k=1`, `k=2`, given-`d` run with no SciPy; `k=2` given-`d` for A/B; `n=1`, `n=2` (null edge), labels, numpy input, validation errors, `RuntimeError` wiring; Python 3.12, 3.13 (SciPy 1.18.1) and 3.15 all pass. The default environment has **no SciPy**, so the `k>2` automatic path there raises the specified `ImportError` (use the `lp` extra to run it).
+- **Code checks**: `_core.py` imports only `math`/`fractions`, has no `try/except/raise`; all 42 functions have docstrings; round 10 is AST-identical to round 9 after stripping docstrings; `sources/` and the two spec files are untouched; no tests/README added; working tree clean.
+
+**Minor findings (not blockers):**
+- **G1** `k=0` (all-zero matrix) passes the seven predicates, then reaches `solve_general` with `search=None` → `TypeError` (open as T12).
+- **G2** non-sequence `labels`/`thresholds` (generators) raise `TypeError`, and `inf` thresholds raise `OverflowError`, instead of the promised `ValueError`. Three lines of predicate hardening (T13).
+- **G3** `k≠2` cells keep duplicate bounds (A: 114 pairs vs 21 distinct bounds; B: 238 vs 30; A₃: 97 vs 35). Correct, but 3–5× larger than needed; `insert_minimal` can skip an equal bound in one line (T14). The `k=2` slot path is unaffected.
+- **G4** the `k>2` verification in `__init__.py` runs on float `d`/`π`; `SPEC-engineering.md` §5 says convert to `Fraction` for an exact check, and float subtraction can round. One-line fix (T15); low practical risk for the current fixtures, but it is the `k>2` safeguard.
+- **G5** historical report entries D3/D5/D8/F5 are superseded (noted in the reading guide).
+
+Verdict: the implementation matches the patched spec and is usable; G1–G4 are small hardening fixes.
 
 ## Decided
 
@@ -66,6 +85,9 @@ Consolidated report, kept current each round. Four buckets: **I know / Decided /
 - **T10 — Completeness of the pruned $k>2$ table.** Default: out of scope for v1; the verification step catches a false feasible. If the author wants a proof or a complete enumeration, that is a separate research/engineering task.
 - **T11 — `exact=True` output.** Default: still deferred (T2); the given-$d$ and $k=2$ paths are already exact internally.
 - **T12 — $k=0$ (all-zero matrix).** The seven predicates as written accept it ($k=A_{0,0}=0$), but the spec's input domain is $k\ge1$ and no $k=0$ behavior is defined; it currently reaches `solve_general` with `search=None` and raises `TypeError`. Default: keep the seven predicates exactly as specified (no eighth predicate invented). If you want $k=0$ rejected cleanly, add "$k\ge1$" to predicate 2 — one line.
+- **T13 — Input-edge hardening (round 11, G2).** Default: make predicates 6/7 return `False` for objects without `__len__` and for non-finite thresholds, so all invalid input raises `ValueError` as the error model promises. Three lines in `_translate.py`.
+- **T14 — Duplicate-bound dedupe (round 11, G3).** Default: add "skip if a stored bound equals `b`" to `_core.insert_minimal` (and one clause to `SPEC.md` §4), shrinking the `k≠2` cells; no behavioral change.
+- **T15 — Exact `k>2` verification (round 11, G4).** Default: convert `d`/`π` to `Fraction` before `verify_embedding` in `__init__.py` (or amend `SPEC-engineering.md` §5 and the D22(iv) note). One line.
 
 ## Findings
 
